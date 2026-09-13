@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Daily Hub</title>
+  <style>
+    :root {
+      --bg-color: #f6f7f9;
+      --card-bg: #ffffff;
+      --text-main: #1a1a1a;
+      --text-sub: #5f6368;
+      --border-color: #e3e5e8;
+      --accent-color: #1a73e8;
+      --badge-weekend-sat: #1a73e8;
+      --badge-weekend-sun: #d93025;
+      --icon-color: #3c4043;
+      --alert-bg: #e8f0fe;
+      --alert-text: #1967d2;
+      --today-border: #1a73e8;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #101114;
+      --card-bg: #1c1d22;
+      --text-main: #e8eaed;
+      --text-sub: #9aa0a6;
+      --border-color: #2d2f36;
+      --accent-color: #8ab4f8;
+      --badge-weekend-sat: #8ab4f8;
+      --badge-weekend-sun: #f28b82;
+      --icon-color: #dadce0;
+      --alert-bg: #1e2a38;
+      --alert-text: #8ab4f8;
+      --today-border: #8ab4f8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 20px;
+      gap: 16px;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      overflow: hidden;
+      user-select: none;
+      position: relative;
+    }
+
+    /* 疑似輝度制御フィルターレイヤー */
+    #brightness-filter {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background-color: #000000;
+      pointer-events: none;
+      z-index: 900;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    /* ピクセルシフト対象コンテナ */
+    .container {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      grid-template-rows: 1.15fr 1fr;
+      grid-gap: 16px;
+      flex: 1;
+      min-height: 0;
+      transition: transform 0.5s ease;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    /* --- 上段左: 日付 & 時計 & ごみ出しリマインダー --- */
+    .datetime-card {
+      justify-content: space-between;
+    }
+
+    .date-year-row {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-align: left;
+    }
+
+    .date-main-center {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 12px;
+      margin: 2px 0;
+    }
+
+    .date-month-day {
+      font-size: 3.2rem;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1;
+      font-feature-settings: "tnum";
+    }
+
+    .date-weekday {
+      font-size: 1.8rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .date-weekday.sat { color: var(--badge-weekend-sat); }
+    .date-weekday.sun, .date-weekday.holiday { color: var(--badge-weekend-sun); }
+
+    .clock-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+    }
+
+    .clock-time {
+      font-size: 3.8rem;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -1px;
+      font-feature-settings: "tnum";
+    }
+
+    .trash-reminder-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .trash-badge {
+      background: var(--bg-color);
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: var(--text-main);
+    }
+
+    .trash-badge.today {
+      background: var(--alert-bg);
+      color: var(--alert-text);
+    }
+
+    /* --- 上段右: 天気カード --- */
+    .weather-card {
+      justify-content: space-between;
+      align-items: stretch;
+    }
+
+    .card-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    .location-text {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .umbrella-alert {
+      display: none;
+      background-color: var(--alert-bg);
+      color: var(--alert-text);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .weather-main-layout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      margin: 2px 0;
+    }
+
+    .weather-icon-wrap {
+      width: 110px;
+      height: 110px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .weather-icon-wrap svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: var(--icon-color);
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .temp-block {
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .temp-val {
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -2px;
+      font-feature-settings: "tnum";
+    }
+
+    .weather-text-desc {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      margin-top: 6px;
+    }
+
+    .weather-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-gap: 8px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 10px;
+    }
+
+    .metric-box {
+      background-color: var(--bg-color);
+      border-radius: 8px;
+      padding: 6px 8px;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      margin-bottom: 2px;
+    }
+
+    .metric-value {
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-feature-settings: "tnum";
+    }
+
+    /* --- 下段: スワイプ切替モジュール (電車 or 週間カレンダー) --- */
+    .switchable-card {
+      grid-column: span 2;
+      position: relative;
+      overflow: hidden;
+      touch-action: pan-y; /* 水平スワイプを検知 */
+    }
+
+    .carousel-header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .indicator-dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border-color);
+      transition: background 0.3s;
+    }
+
+    .dot.active {
+      background: var(--accent-color);
+      width: 18px;
+      border-radius: 4px;
+    }
+
+    .nav-arrow-btn {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* ビュー切り替えコンテナ */
+    .view-slider {
+      display: flex;
+      width: 200%;
+      height: 100%;
+      transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .slider-pane {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+
+    /* 電車ビュー */
+    .train-stage {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      margin: 8px 0;
+    }
+
+    .train-primary {
+      text-align: center;
+    }
+
+    .train-sub-label {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .train-countdown-huge {
+      font-size: 4.6rem;
+      font-weight: 800;
+      line-height: 0.95;
+      letter-spacing: -1.5px;
+      font-feature-settings: "tnum";
+    }
+
+    .train-departure-clock {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      margin-top: 6px;
+    }
+
+    .train-secondary-col {
+      border-left: 2px solid var(--border-color);
+      padding-left: 36px;
+    }
+
+    .train-next-huge {
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-feature-settings: "tnum";
+      margin-top: 4px;
+    }
+
+    /* 週間カレンダービュー */
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-gap: 8px;
+      flex: 1;
+      align-items: stretch;
+      margin-top: 8px;
+    }
+
+    .week-col {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+    }
+
+    .week-col.is-today {
+      border: 2px solid var(--today-border);
+      background: var(--card-bg);
+    }
+
+    .week-col-date {
+      font-size: 1.1rem;
+      font-weight: 800;
+      line-height: 1;
+      font-feature-settings: "tnum";
+    }
+
+    .week-col-day {
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+
+    .week-col-day.sat { color: var(--badge-weekend-sat); }
+    .week-col-day.sun, .week-col-day.holiday { color: var(--badge-weekend-sun); }
+
+    .week-weather-icon {
+      width: 32px;
+      height: 32px;
+      margin: 4px 0;
+    }
+
+    .week-weather-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: var(--icon-color);
+      stroke-width: 2;
+    }
+
+    .week-temp {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-sub);
+    }
+
+    .week-trash-text {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--alert-text);
+      background: var(--alert-bg);
+      padding: 2px 4px;
+      border-radius: 4px;
+      margin-top: 4px;
+      max-width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    /* 一時復帰アラートバッジ */
+    #wake-toast {
+      display: none;
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      z-index: 950;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    /* --- フッター --- */
+    footer {
+      height: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+
+    .footer-actions button {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      margin-left: 6px;
+      font-weight: 600;
+    }
+
+    /* --- モーダル --- */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.65);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      width: 92%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .modal-header h3 { font-size: 1.15rem; }
+
+    .form-item { margin-bottom: 12px; }
+    .form-item label { display: block; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 4px; font-weight: 600; }
+    .form-item input, .form-item textarea, .form-item select {
+      width: 100%; padding: 8px; border: 1px solid var(--border-color);
+      border-radius: 6px; background: var(--bg-color); color: var(--text-main);
+      font-size: 0.85rem; font-family: inherit;
+    }
+    .form-item textarea { height: 48px; resize: vertical; }
+
+    .location-selector-group, .time-range-group {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .collapsible-section {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .collapsible-header {
+      background: var(--bg-color);
+      padding: 8px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .collapsible-content {
+      display: none;
+      padding: 12px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      line-height: 1.5;
+    }
+
+    .collapsible-content.open { display: block; }
+
+    .backup-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .backup-buttons button {
+      flex: 1;
+      padding: 6px;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-main);
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 16px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 12px;
+    }
+
+    .modal-footer button {
+      padding: 7px 16px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body onclick="handleScreenTap(event)">
+
+  <!-- 疑似輝度減光フィルター -->
+  <div id="brightness-filter"></div>
+  <div id="wake-toast">一時復帰中 (残り <span id="wake-sec">30</span>秒)</div>
+
+  <div class="container" id="hub-container">
+    <!-- 上段左: 日付 & 時計 & ごみ出しリマインダー -->
+    <div class="card datetime-card">
+      <div id="date-year-era" class="date-year-row">----年（--）</div>
+      <div class="date-main-center">
+        <div id="date-month-day" class="date-month-day">-月-日</div>
+        <div id="date-weekday" class="date-weekday">（-）</div>
+      </div>
+      <div class="clock-row">
+        <div id="clock-time" class="clock-time">--:--</div>
+      </div>
+      <div class="trash-reminder-row">
+        <div class="trash-badge today">今日: <span id="trash-today">なし</span></div>
+        <div class="trash-badge">明日: <span id="trash-tomorrow">なし</span></div>
+      </div>
+    </div>
+
+    <!-- 上段右: 天気カード -->
+    <div class="card weather-card">
+      <div class="card-header-bar">
+        <span id="location-name" class="location-text">位置特定中...</span>
+        <span id="umbrella-badge" class="umbrella-alert">☂️ 傘が必要</span>
+        <span id="weather-updated">--:-- 更新</span>
+      </div>
+      <div class="weather-main-layout">
+        <div class="weather-icon-wrap" id="weather-icon-container">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </div>
+        <div class="temp-block">
+          <div id="temperature" class="temp-val">--°</div>
+          <div id="weather-desc" class="weather-text-desc">取得中</div>
+        </div>
+      </div>
+      <div class="weather-metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">最高</div>
+          <div id="temp-max" class="metric-value">--°</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">最低</div>
+          <div id="temp-min" class="metric-value">--°</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">降水確率</div>
+          <div id="precip-prob" class="metric-value">--%</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">風速</div>
+          <div id="windspeed" class="metric-value">--m</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 下段: スワイプ切替モジュール (電車 or 週間カレンダー) -->
+    <div class="card switchable-card" id="bottom-card">
+      <!-- カード上部ヘッダー (共通) -->
+      <div class="card-header-bar">
+        <span id="bottom-header-title" class="location-text">最寄駅 発車案内</span>
+        <div class="carousel-header-controls">
+          <button class="nav-arrow-btn" onclick="prevBottomView()">◀</button>
+          <div class="indicator-dots">
+            <span class="dot active" id="dot-0"></span>
+            <span class="dot" id="dot-1"></span>
+          </div>
+          <button class="nav-arrow-btn" onclick="nextBottomView()">▶</button>
+        </div>
+      </div>
+
+      <!-- スライダー本体 -->
+      <div class="view-slider" id="bottom-slider">
+        <!-- ペイン1: 電車案内 -->
+        <div class="slider-pane">
+          <div style="display:flex; justify-content:flex-end; font-size:0.8rem; color:var(--text-sub); margin-top:4px;">
+            <span id="train-mode-badge" style="margin-right: 8px;">平日ダイヤ</span>
+            <span id="train-display-mode-label">[凡そ]</span>
+          </div>
+          <div class="train-stage">
+            <div class="train-primary">
+              <div class="train-sub-label">次の発車まで</div>
+              <div id="train-countdown" class="train-countdown-huge">--:--</div>
+              <div id="train-next-dep" class="train-departure-clock">発車予定: --:--</div>
+            </div>
+            <div class="train-secondary-col">
+              <div class="train-sub-label">その次の発車（次々発）</div>
+              <div id="train-subsequent" class="train-next-huge">--:--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ペイン2: 週間カレンダー (7日間) -->
+        <div class="slider-pane">
+          <div class="week-grid" id="week-grid-container">
+            <!-- JSで動的に7日分を描画 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div id="hub-status-text">モード: 判定中</div>
+    <div class="footer-actions">
+      <button onclick="toggleTrainDisplayMode()">表示: <span id="btn-mode-text">凡そ</span></button>
+      <button onclick="openTrainModal()">設定・ヘルプ</button>
+      <button onclick="refreshWeatherManual()">天気更新</button>
+      <button onclick="toggleThemeOverride()">テーマ切替</button>
+    </div>
+  </footer>
+
+  <!-- 設定モーダル -->
+  <div id="train-modal" class="modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>ダッシュボード設定</h3>
+        <span style="font-size:0.75rem; color:var(--text-sub);">ローカル保存</span>
+      </div>
+
+      <!-- 画面輝度・時間帯モード設定 -->
+      <div class="form-item">
+        <label>🌅 出勤準備モード (高輝度・視認性最優先)</label>
+        <div class="time-range-group">
+          <input type="time" id="input-commute-start" style="flex:1;">
+          <span>〜</span>
+          <input type="time" id="input-commute-end" style="flex:1;">
+          <select id="input-commute-bright" style="flex:0.8;">
+            <option value="1.0">100%</option>
+            <option value="0.9">90%</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-item">
+        <label>☀️ 日中モード (通常輝度)</label>
+        <div class="time-range-group">
+          <span style="font-size:0.8rem; color:var(--text-sub); flex:1;">出勤終了後 〜 深夜前</span>
+          <select id="input-day-bright" style="flex:0.8;">
+            <option value="0.85">85%</option>
+            <option value="0.75">75%</option>
+            <option value="0.65">65%</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-item">
+        <label>🌙 深夜モード (減光・省電力・ダーク固定)</label>
+        <div class="time-range-group">
+          <input type="time" id="input-night-start" style="flex:1;">
+          <span>〜</span>
+          <span style="font-size:0.8rem; color:var(--text-sub); flex:1;">出勤開始まで</span>
+          <select id="input-night-bright" style="flex:0.8;">
+            <option value="0.30">30%</option>
+            <option value="0.20">20%</option>
+            <option value="0.10">10%</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 位置情報設定セクション -->
+      <div class="form-item">
+        <label>天気予報の取得地点</label>
+        <select id="select-location-mode" onchange="onLocationModeChange()">
+          <option value="manual">手動選択（都道府県・都市を指定）</option>
+          <option value="auto">GPS自動取得（ブラウザの位置情報）</option>
+        </select>
+      </div>
+
+      <div id="manual-location-container" class="form-item">
+        <label>地点の選択</label>
+        <div class="location-selector-group">
+          <select id="select-pref" onchange="onPrefChange()" style="flex:1;"></select>
+          <select id="select-city" style="flex:1.2;"></select>
+        </div>
+      </div>
+
+      <!-- 電車表示モード設定 -->
+      <div class="form-item">
+        <label>電車の残時間カウントダウン方式</label>
+        <select id="select-train-display-mode">
+          <option value="approx">凡そモード（約○分後 / 毎分更新でチラつきなし）</option>
+          <option value="detail">詳細時間モード（分:秒 / 毎秒更新）</option>
+        </select>
+      </div>
+
+      <!-- 時刻表設定セクション -->
+      <div class="form-item">
+        <label>駅名</label>
+        <input type="text" id="input-station" placeholder="例: 円山公園駅">
+      </div>
+      <div class="form-item">
+        <label>路線・方面</label>
+        <input type="text" id="input-direction" placeholder="例: 東西線 新さっぽろ方面">
+      </div>
+      <div class="form-item">
+        <label>平日ダイヤ (HH:MM形式 / カンマまたは改行区切り)</label>
+        <textarea id="input-weekday" placeholder="例: 06:10, 06:20, 06:30..."></textarea>
+      </div>
+      <div class="form-item">
+        <label>土休日ダイヤ (HH:MM形式 / カンマまたは改行区切り)</label>
+        <textarea id="input-weekend" placeholder="例: 06:10, 06:20, 06:30..."></textarea>
+      </div>
+
+      <!-- ごみ出しスケジュール設定 -->
+      <div class="form-item">
+        <label>ごみ収集ルール設定 (1行につき1ルール: 曜日:ごみ名)</label>
+        <textarea id="input-trash-rules" placeholder="例:
+火:燃やせるごみ
+金:燃やせるごみ
+第2水:びん・缶・ペットボトル" style="height:60px;"></textarea>
+      </div>
+
+      <!-- バックアップ / 移行 -->
+      <div class="collapsible-section">
+        <div class="collapsible-header" onclick="toggleAccordion('backup-content')">
+          <span>📦 データのバックアップ / 移行</span>
+          <span>▼</span>
+        </div>
+        <div id="backup-content" class="collapsible-content">
+          <div class="backup-buttons">
+            <button onclick="exportSettingsFile()">JSONファイル保存</button>
+            <button onclick="copyExportJson()">JSONをクリップボードにコピー</button>
+          </div>
+          <label style="display:block; margin:8px 0 4px; font-weight:600;">JSONから復元 / インポート:</label>
+          <textarea id="import-json-area" placeholder="エクスポートしたJSONを貼り付けてインポート" style="height:60px; font-size:0.75rem;"></textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+            <input type="file" id="import-file" accept=".json" onchange="handleFileSelect(event)" style="font-size:0.75rem; width:70%;">
+            <button onclick="applyImportJson()" style="padding:4px 10px; font-size:0.75rem; border-radius:6px; border:1px solid var(--border-color); cursor:pointer;">インポート</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ヘルプ -->
+      <div class="collapsible-section">
+        <div class="collapsible-header" onclick="toggleAccordion('help-content')">
+          <span>📖 使い方・スワイプ切替について</span>
+          <span>▼</span>
+        </div>
+        <div id="help-content" class="collapsible-content">
+          <strong>1. 下段モジュールのスワイプ切替:</strong><br>
+          下段モジュールを左右にスワイプ（または右上の矢印ボタンをタップ）することで、「電車発車案内」と「週間カレンダー（7日間の天気・ごみ収集）」を切り替えられます。状態は記憶されます。<br><br>
+          <strong>2. 時間帯モードと疑似輝度:</strong><br>
+          出勤時100%、日中75%、深夜帯20%（画面タップで30秒間通常復帰）で液晶の焼き付き・劣化を抑止します。<br><br>
+          <strong>3. ごみ出しルールの書き方:</strong><br>
+          「火:燃やせるごみ」「第2水:プラ」のように記述します。週間カレンダーの各曜日の枠内にも自動反映されます。
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button onclick="closeTrainModal()">閉じる</button>
+        <button onclick="saveAllSettings()" style="background:var(--accent-color); color:#fff; border:none;">設定を保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- 0. 祝日判定ロジック ---
+    function getJapaneseHolidayName(date) {
+      const y = date.getFullYear();
+      const m = date.getMonth() + 1;
+      const d = date.getDate();
+      const day = date.getDay();
+
+      function getShunbun(year) {
+        if (year < 1980) return 21;
+        if (year <= 2099) return Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+        return 21;
+      }
+      function getShubun(year) {
+        if (year < 1980) return 23;
+        if (year <= 2099) return Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+        return 23;
+      }
+
+      if (m === 1 && d === 1) return "元日";
+      if (m === 2 && d === 11) return "建国記念の日";
+      if (m === 2 && d === 23 && y >= 2020) return "天皇誕生日";
+      if (m === 4 && d === 29) return "昭和の日";
+      if (m === 5 && d === 3) return "憲法記念日";
+      if (m === 5 && d === 4) return "みどりの日";
+      if (m === 5 && d === 5) return "こどもの日";
+      if (m === 8 && d === 11 && y >= 2016) return "山の日";
+      if (m === 11 && d === 3) return "文化の日";
+      if (m === 11 && d === 23) return "勤労感謝の日";
+
+      if (m === 3 && d === getShunbun(y)) return "春分の日";
+      if (m === 9 && d === getShubun(y)) return "秋分の日";
+
+      const nthMonday = Math.floor((d - 1) / 7) + 1;
+      if (day === 1) {
+        if (m === 1 && nthMonday === 2) return "成人の日";
+        if (m === 7 && nthMonday === 3) return "海の日";
+        if (m === 9 && nthMonday === 3) return "敬老の日";
+        if (m === 10 && nthMonday === 2) return "スポーツの日";
+      }
+
+      const yesterday = new Date(date);
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (yesterday.getDay() === 0 && getJapaneseHolidayName(yesterday)) {
+        return "振替休日";
+      }
+
+      return null;
+    }
+
+    function isHolidayOrWeekend(date) {
+      const d = date.getDay();
+      if (d === 0 || d === 6) return true;
+      return getJapaneseHolidayName(date) !== null;
+    }
+
+    // --- 1. 時間帯モード・輝度制御・ピクセルシフト ---
+    const DEFAULT_TIME_SETTINGS = {
+      commuteStart: "06:30",
+      commuteEnd: "09:00",
+      commuteBright: "1.0",
+      dayBright: "0.75",
+      nightStart: "23:00",
+      nightBright: "0.20"
+    };
+
+    function getTimeSettings() {
+      const saved = localStorage.getItem('hub_time_settings');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+      }
+      return DEFAULT_TIME_SETTINGS;
+    }
+
+    let isTemporaryWake = false;
+    let wakeCountdownSec = 30;
+    let wakeInterval = null;
+
+    function handleScreenTap(event) {
+      if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls')) return;
+      const currentMode = getCurrentTimeMode();
+      if (currentMode === 'night' && !isTemporaryWake) {
+        triggerTemporaryWake();
+      }
+    }
+
+    function triggerTemporaryWake() {
+      isTemporaryWake = true;
+      wakeCountdownSec = 30;
+      const toast = document.getElementById('wake-toast');
+      const wakeSec = document.getElementById('wake-sec');
+      toast.style.display = 'block';
+      wakeSec.textContent = wakeCountdownSec;
+
+      applyBrightness(1.0);
+
+      if (wakeInterval) clearInterval(wakeInterval);
+      wakeInterval = setInterval(() => {
+        wakeCountdownSec--;
+        wakeSec.textContent = wakeCountdownSec;
+        if (wakeCountdownSec <= 0) {
+          clearInterval(wakeInterval);
+          isTemporaryWake = false;
+          toast.style.display = 'none';
+          updateTimeAndTheme();
+        }
+      }, 1000);
+    }
+
+    function timeToMinutes(tStr) {
+      const [h, m] = tStr.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function getCurrentTimeMode() {
+      const cfg = getTimeSettings();
+      const now = new Date();
+      const curMin = now.getHours() * 60 + now.getMinutes();
+
+      const cStart = timeToMinutes(cfg.commuteStart);
+      const cEnd = timeToMinutes(cfg.commuteEnd);
+      const nStart = timeToMinutes(cfg.nightStart);
+
+      if (cStart < cEnd) {
+        if (curMin >= cStart && curMin < cEnd) return 'commute';
+      } else {
+        if (curMin >= cStart || curMin < cEnd) return 'commute';
+      }
+
+      if (nStart > cStart) {
+        if (curMin >= nStart || curMin < cStart) return 'night';
+      } else {
+        if (curMin >= nStart && curMin < cStart) return 'night';
+      }
+
+      return 'day';
+    }
+
+    function applyBrightness(level) {
+      const overlay = document.getElementById('brightness-filter');
+      const opacity = Math.max(0, Math.min(0.9, 1 - level));
+      overlay.style.opacity = opacity;
+    }
+
+    function applyPixelShift() {
+      const container = document.getElementById('hub-container');
+      const shiftX = Math.floor(Math.random() * 7) - 3;
+      const shiftY = Math.floor(Math.random() * 7) - 3;
+      container.style.transform = `translate(${shiftX}px, ${shiftY}px)`;
+    }
+
+    // --- 2. 主要地点マスターデータ ---
+    const LOCATION_PRESETS = {
+      "北海道": [
+        { name: "札幌市 中央区", lat: 43.0553, lon: 141.3408 },
+        { name: "札幌市 北区", lat: 43.0908, lon: 141.3408 },
+        { name: "札幌市 東区", lat: 43.0768, lon: 141.3644 },
+        { name: "札幌市 白石区", lat: 43.0483, lon: 141.4055 },
+        { name: "札幌市 豊平区", lat: 43.0312, lon: 141.3788 },
+        { name: "札幌市 南区", lat: 42.9904, lon: 141.3534 },
+        { name: "札幌市 西区", lat: 43.0747, lon: 141.3005 },
+        { name: "札幌市 厚別区", lat: 43.0381, lon: 141.4735 },
+        { name: "札幌市 手稲区", lat: 43.1264, lon: 141.2443 },
+        { name: "札幌市 清田区", lat: 43.0016, lon: 141.4253 },
+        { name: "函館市", lat: 41.7687, lon: 140.7288 },
+        { name: "旭川市", lat: 43.7706, lon: 142.3649 },
+        { name: "小樽市", lat: 43.1907, lon: 140.9947 },
+        { name: "帯広市", lat: 42.9239, lon: 143.1961 },
+        { name: "釧路市", lat: 42.9849, lon: 144.3818 },
+        { name: "千歳市", lat: 42.8228, lon: 141.6521 }
+      ],
+      "東京都": [
+        { name: "新宿区", lat: 35.6938, lon: 139.7034 },
+        { name: "千代田区 (東京駅)", lat: 35.6812, lon: 139.7671 },
+        { name: "渋谷区", lat: 35.6580, lon: 139.7016 },
+        { name: "港区", lat: 35.6586, lon: 139.7514 },
+        { name: "品川区", lat: 35.6092, lon: 139.7302 },
+        { name: "世田谷区", lat: 35.6466, lon: 139.6532 },
+        { name: "八王子市", lat: 35.6552, lon: 139.3239 },
+        { name: "立川市", lat: 35.6995, lon: 139.4138 }
+      ],
+      "神奈川県": [
+        { name: "横浜市 中区", lat: 35.4446, lon: 139.6428 },
+        { name: "横浜市 西区 (横浜駅)", lat: 35.4660, lon: 139.6226 },
+        { name: "川崎市 川崎区", lat: 35.5309, lon: 139.7029 }
+      ],
+      "愛知県": [
+        { name: "名古屋市 中区 (栄)", lat: 35.1685, lon: 136.9064 },
+        { name: "名古屋市 中村区 (名駅)", lat: 35.1709, lon: 136.8815 }
+      ],
+      "大阪府": [
+        { name: "大阪市 北区 (梅田)", lat: 34.7025, lon: 135.4959 },
+        { name: "大阪市 中央区 (難波)", lat: 34.6666, lon: 135.5003 }
+      ],
+      "京都府": [
+        { name: "京都市 下京区 (京都駅)", lat: 34.9858, lon: 135.7588 },
+        { name: "京都市 中京区", lat: 35.0116, lon: 135.7681 }
+      ],
+      "福岡県": [
+        { name: "福岡市 博多区 (博多駅)", lat: 33.5902, lon: 130.4207 },
+        { name: "福岡市 中央区 (天神)", lat: 33.5904, lon: 130.3989 }
+      ],
+      "宮城県": [
+        { name: "仙台市 青葉区 (仙台駅)", lat: 38.2601, lon: 140.8824 }
+      ],
+      "広島県": [
+        { name: "広島市 中区", lat: 34.3853, lon: 132.4553 }
+      ]
+    };
+
+    // --- 3. 日時・時計・ごみリマインダー・テーマ ---
+    function getWareki(year) {
+      if (year >= 2019) {
+        const reiwa = year - 2018;
+        return reiwa === 1 ? '令和元年' : `令和${reiwa}年`;
+      }
+      return '';
+    }
+
+    function updateTimeAndTheme() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const date = now.getDate();
+      const dayIdx = now.getDay();
+      const days = ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'];
+
+      const wareki = getWareki(year);
+      document.getElementById('date-year-era').textContent = `${year}年${wareki ? `（${wareki}）` : ''}`;
+      document.getElementById('date-month-day').textContent = `${month}月${date}日`;
+      
+      const holidayName = getJapaneseHolidayName(now);
+      const weekdayEl = document.getElementById('date-weekday');
+      
+      if (holidayName) {
+        weekdayEl.textContent = `（${holidayName}）`;
+        weekdayEl.className = 'date-weekday holiday';
+      } else {
+        weekdayEl.textContent = `（${days[dayIdx]}）`;
+        weekdayEl.className = 'date-weekday' + (dayIdx === 6 ? ' sat' : dayIdx === 0 ? ' sun' : '');
+      }
+
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('clock-time').textContent = `${h}:${m}`;
+
+      updateTrashReminders(now);
+      applyThemeAndBrightness();
+    }
+
+    function applyThemeAndBrightness() {
+      const override = localStorage.getItem('theme_override');
+      const mode = getCurrentTimeMode();
+      const cfg = getTimeSettings();
+
+      let isDark = false;
+      if (override === 'dark') isDark = true;
+      else if (override === 'light') isDark = false;
+      else {
+        isDark = (mode === 'night') || (now => now.getHours() >= 18 || now.getHours() < 6)(new Date());
+      }
+
+      if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+      else document.documentElement.removeAttribute('data-theme');
+
+      if (!isTemporaryWake) {
+        let bLevel = 1.0;
+        let modeLabel = "日中";
+        if (mode === 'commute') {
+          bLevel = parseFloat(cfg.commuteBright);
+          modeLabel = "出勤準備";
+        } else if (mode === 'night') {
+          bLevel = parseFloat(cfg.nightBright);
+          modeLabel = "深夜(減光)";
+        } else {
+          bLevel = parseFloat(cfg.dayBright);
+          modeLabel = "日中";
+        }
+        applyBrightness(bLevel);
+        document.getElementById('hub-status-text').textContent = 
+          `モード: ${modeLabel} (輝度${Math.round(bLevel * 100)}%)`;
+      }
+    }
+
+    function toggleThemeOverride() {
+      const cur = localStorage.getItem('theme_override');
+      if (!cur) localStorage.setItem('theme_override', 'dark');
+      else if (cur === 'dark') localStorage.setItem('theme_override', 'light');
+      else localStorage.removeItem('theme_override');
+      updateTimeAndTheme();
+    }
+
+    const DEFAULT_TRASH_RULES = "火:燃やせるごみ\n金:燃やせるごみ\n第2水:びん・缶・ペットボトル\n第4水:びん・缶・ペットボトル";
+
+    function getTrashForDate(targetDate) {
+      const saved = localStorage.getItem('hub_trash_rules') || DEFAULT_TRASH_RULES;
+      const lines = saved.split('\n').map(l => l.trim()).filter(Boolean);
+      
+      const days = ['日', '月', '火', '水', '木', '金', '土'];
+      const targetDayStr = days[targetDate.getDay()];
+      const nth = Math.floor((targetDate.getDate() - 1) / 7) + 1;
+
+      const matched = [];
+      for (const line of lines) {
+        const [rule, name] = line.split(':');
+        if (!rule || !name) continue;
+
+        const nthMatch = rule.match(/^第([1-5])([日月火水木金土])$/);
+        if (nthMatch) {
+          if (parseInt(nthMatch[1], 10) === nth && nthMatch[2] === targetDayStr) {
+            matched.push(name.trim());
+          }
+        } else if (rule.trim() === targetDayStr) {
+          matched.push(name.trim());
+        }
+      }
+      return matched.length > 0 ? matched.join(' / ') : 'なし';
+    }
+
+    function updateTrashReminders(now) {
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      document.getElementById('trash-today').textContent = getTrashForDate(now);
+      document.getElementById('trash-tomorrow').textContent = getTrashForDate(tomorrow);
+    }
+
+    // --- 4. 天気とSVGベクターアイコン ---
+    const WEATHER_ICONS = {
+      sun: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+      cloudSun: `<svg viewBox="0 0 24 24"><path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41"/><path d="M15.5 17a4.5 4.5 0 0 0-4.5-4.5 4.4 4.4 0 0 0-.8.08 6 6 0 1 0-7.2 7.2A4.5 4.5 0 0 0 7.5 21h8a4.5 4.5 0 0 0 0-9z"/></svg>`,
+      cloud: `<svg viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>`,
+      rain: `<svg viewBox="0 0 24 24"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="12" y1="15" x2="12" y2="17"/><line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="13" x2="16" y2="15"/></svg>`,
+      snow: `<svg viewBox="0 0 24 24"><path d="M20 17.58A4.5 4.5 0 0 0 17.5 9h-1.79A7 7 0 1 0 5 16.5"/><line x1="8" y1="15" x2="8" y2="15.01"/><line x1="8" y1="19" x2="8" y2="19.01"/><line x1="12" y1="17" x2="12" y2="17.01"/><line x1="12" y1="21" x2="12" y2="21.01"/><line x1="16" y1="15" x2="16" y2="15.01"/><line x1="16" y1="19" x2="16" y2="19.01"/></svg>`,
+      thunder: `<svg viewBox="0 0 24 24"><path d="M19 16.9A4.5 4.5 0 0 0 17.5 9h-1.8A7 7 0 1 0 4 15.9"/><polygon points="13 11 9 17 14 17 11 23 19 15 14 15 17 11 13 11"/></svg>`
+    };
+
+    function resolveWeatherDisplay(code) {
+      if (code === 0) return { desc: '快晴', icon: WEATHER_ICONS.sun };
+      if (code === 1 || code === 2) return { desc: '晴れ時々曇', icon: WEATHER_ICONS.cloudSun };
+      if (code === 3 || code === 45 || code === 48) return { desc: '曇り', icon: WEATHER_ICONS.cloud };
+      if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return { desc: '雨', icon: WEATHER_ICONS.rain };
+      if ((code >= 71 && code <= 77) || code === 85 || code === 86) return { desc: '雪', icon: WEATHER_ICONS.snow };
+      if (code >= 95) return { desc: '雷雨', icon: WEATHER_ICONS.thunder };
+      return { desc: '晴れ/曇り', icon: WEATHER_ICONS.cloudSun };
+    }
+
+    function getLocationSettings() {
+      const saved = localStorage.getItem('hub_location_settings');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+      }
+      return {
+        mode: "manual",
+        pref: "北海道",
+        cityName: "札幌市 中央区",
+        lat: 43.0553,
+        lon: 141.3408
+      };
+    }
+
+    function refreshWeatherManual() {
+      loadWeatherBasedOnConfig();
+    }
+
+    function loadWeatherBasedOnConfig() {
+      const loc = getLocationSettings();
+      if (loc.mode === 'auto') {
+        if (!navigator.geolocation) {
+          fetchWeather(loc.lat, loc.lon, `${loc.cityName} (自動失敗)`);
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            fetchWeather(pos.coords.latitude, pos.coords.longitude, "現在地 (GPS)");
+          },
+          () => {
+            fetchWeather(loc.lat, loc.lon, `${loc.cityName} (GPS不可)`);
+          },
+          { timeout: 8000, maximumAge: 600000 }
+        );
+      } else {
+        fetchWeather(loc.lat, loc.lon, loc.cityName);
+      }
+    }
+
+    let globalDailyWeatherData = null;
+
+    async function fetchWeather(lat, lon, label) {
+      try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        document.getElementById('location-name').textContent = label;
+        document.getElementById('temperature').textContent = `${Math.round(data.current.temperature_2m)}°`;
+        document.getElementById('windspeed').textContent = data.current.wind_speed_10m;
+
+        const info = resolveWeatherDisplay(data.current.weather_code);
+        document.getElementById('weather-desc').textContent = info.desc;
+        document.getElementById('weather-icon-container').innerHTML = info.icon;
+
+        let precipProb = 0;
+        if (data.daily && data.daily.precipitation_probability_max.length > 0) {
+          precipProb = data.daily.precipitation_probability_max[0] ?? 0;
+          document.getElementById('precip-prob').textContent = `${precipProb}%`;
+          document.getElementById('temp-max').textContent = `${Math.round(data.daily.temperature_2m_max[0])}°`;
+          document.getElementById('temp-min').textContent = `${Math.round(data.daily.temperature_2m_min[0])}°`;
+        }
+
+        const umbrellaBadge = document.getElementById('umbrella-badge');
+        if (precipProb >= 40) {
+          umbrellaBadge.textContent = `☂️ 傘が必要 (${precipProb}%)`;
+          umbrellaBadge.style.display = 'inline-block';
+        } else {
+          umbrellaBadge.style.display = 'none';
+        }
+
+        const now = new Date();
+        document.getElementById('weather-updated').textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} 更新`;
+
+        // 週間天気データを保持してカレンダーを描画
+        globalDailyWeatherData = data.daily;
+        renderWeekCalendar();
+      } catch(e) {
+        document.getElementById('weather-desc').textContent = '取得失敗';
+      }
+    }
+
+    // --- 5. 下段モジュール（電車 ⇄ 週間カレンダー）切り替え & スワイプ制御 ---
+    let currentBottomView = parseInt(localStorage.getItem('hub_bottom_view') || "0", 10); // 0: 電車, 1: カレンダー
+
+    function updateBottomViewUI() {
+      const slider = document.getElementById('bottom-slider');
+      slider.style.transform = `translateX(-${currentBottomView * 50}%)`;
+
+      document.getElementById('dot-0').className = 'dot' + (currentBottomView === 0 ? ' active' : '');
+      document.getElementById('dot-1').className = 'dot' + (currentBottomView === 1 ? ' active' : '');
+
+      const titleEl = document.getElementById('bottom-header-title');
+      if (currentBottomView === 0) {
+        const config = loadTrainConfig();
+        titleEl.textContent = `${config.station} - ${config.direction}`;
+      } else {
+        titleEl.textContent = "週間カレンダー & 天気予報 (7日間)";
+      }
+      localStorage.setItem('hub_bottom_view', currentBottomView);
+    }
+
+    function prevBottomView() {
+      currentBottomView = (currentBottomView === 0) ? 1 : 0;
+      updateBottomViewUI();
+    }
+
+    function nextBottomView() {
+      currentBottomView = (currentBottomView === 1) ? 0 : 1;
+      updateBottomViewUI();
+    }
+
+    // スワイプ（タッチジェスチャー）の実装
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const bottomCard = document.getElementById('bottom-card');
+
+    bottomCard.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    bottomCard.addEventListener('touchend', (e) => {
+      const diffX = e.changedTouches[0].screenX - touchStartX;
+      const diffY = e.changedTouches[0].screenY - touchStartY;
+      // 水平方向へのスワイプ判定（50px以上かつ水平移動が支配的）
+      if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX < 0) {
+          // 左スワイプ -> 次へ
+          currentBottomView = 1;
+        } else {
+          // 右スワイプ -> 前へ
+          currentBottomView = 0;
+        }
+        updateBottomViewUI();
+      }
+    }, { passive: true });
+
+    // --- 6. 週間カレンダー描画ロジック ---
+    function renderWeekCalendar() {
+      const container = document.getElementById('week-grid-container');
+      container.innerHTML = '';
+
+      const today = new Date();
+      const days = ['日', '月', '火', '水', '木', '金', '土'];
+
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+
+        const col = document.createElement('div');
+        col.className = 'week-col' + (i === 0 ? ' is-today' : '');
+
+        const dayIdx = d.getDay();
+        const holiday = getJapaneseHolidayName(d);
+        let dayClass = 'week-col-day';
+        let dayLabel = days[dayIdx];
+
+        if (holiday) {
+          dayClass += ' holiday';
+          dayLabel = holiday.length > 3 ? holiday.slice(0, 3) : holiday;
+        } else if (dayIdx === 6) {
+          dayClass += ' sat';
+        } else if (dayIdx === 0) {
+          dayClass += ' sun';
+        }
+
+        // 天気アイコン & 気温
+        let weatherIconHtml = '';
+        let tempHtml = '--°/--°';
+        if (globalDailyWeatherData && globalDailyWeatherData.time && globalDailyWeatherData.time[i]) {
+          const wCode = globalDailyWeatherData.weather_code[i];
+          const maxT = Math.round(globalDailyWeatherData.temperature_2m_max[i]);
+          const minT = Math.round(globalDailyWeatherData.temperature_2m_min[i]);
+          const wInfo = resolveWeatherDisplay(wCode);
+          weatherIconHtml = wInfo.icon;
+          tempHtml = `${maxT}°/${minT}°`;
+        }
+
+        // ごみ
+        const trash = getTrashForDate(d);
+        const trashHtml = (trash !== 'なし') ? `<div class="week-trash-text" title="${trash}">${trash}</div>` : '';
+
+        col.innerHTML = `
+          <div class="week-col-date">${d.getMonth() + 1}/${d.getDate()}</div>
+          <div class="${dayClass}">${dayLabel}</div>
+          <div class="week-weather-icon">${weatherIconHtml}</div>
+          <div class="week-temp">${tempHtml}</div>
+          ${trashHtml}
+        `;
+        container.appendChild(col);
+      }
+    }
+
+    // --- 7. 電車発車案内ロジック ---
+    const DEFAULT_TRAIN_DATA = {
+      station: "円山公園駅",
+      direction: "東西線 新さっぽろ方面",
+      weekday: ["06:10", "06:20", "06:30", "06:40", "06:49", "06:58", "07:07", "07:16", "07:23", "07:30", "07:36", "07:40", "07:44", "07:49", "07:53", "07:57", "08:01", "08:05", "08:09", "08:13", "08:18", "08:22", "08:26", "08:31", "08:35", "08:39", "08:43", "08:47", "08:52", "08:56", "09:00", "09:04", "09:09", "09:13", "09:18", "09:22", "09:26", "09:30", "09:34", "09:39", "09:44", "09:52", "09:59", "10:06", "10:13", "10:20", "10:27", "10:34", "10:41", "10:48", "10:55", "11:02", "11:09", "11:16", "11:23", "11:30", "11:37", "11:44", "11:51", "11:58", "12:05", "12:12", "12:19", "12:26", "12:33", "12:40", "12:47", "12:54", "13:01", "13:08", "13:15", "13:22", "13:29", "13:36", "13:43", "13:50", "13:57", "14:04", "14:11", "14:18", "14:25", "14:32", "14:39", "14:46", "14:53", "15:00", "15:07", "15:14", "15:21", "15:28", "15:35", "15:42", "15:49", "15:56", "16:03", "16:10", "16:17", "16:24", "16:32", "16:39", "16:46", "16:52", "16:59", "17:05", "17:10", "17:15", "17:20", "17:25", "17:30", "17:35", "17:40", "17:45", "17:51", "17:56", "18:01", "18:06", "18:11", "18:16", "18:21", "18:26", "18:32", "18:37", "18:42", "18:47", "18:53", "18:58", "19:04", "19:09", "19:14", "19:20", "19:25", "19:30", "19:35", "19:40", "19:46", "19:52", "19:57", "20:04", "20:11", "20:19", "20:27", "20:34", "20:42", "20:49", "20:57", "21:04", "21:12", "21:19", "21:27", "21:34", "21:42", "21:49", "21:57", "22:04", "22:12", "22:19", "22:28", "22:37", "22:45", "22:54", "23:01", "23:09", "23:18", "23:26", "23:34", "23:42", "23:50", "00:00", "00:10"],
+      weekend: ["06:10", "06:20", "06:30", "06:40", "06:48", "06:58", "07:07", "07:15", "07:24", "07:32", "07:39", "07:46", "07:53", "08:00", "08:07", "08:14", "08:21", "08:28", "08:35", "08:42", "08:49", "08:56", "09:03", "09:10", "09:17", "09:24", "09:31", "09:38", "09:45", "09:52", "09:59", "10:06", "10:13", "10:20", "10:27", "10:34", "10:41", "10:48", "10:55", "11:02", "11:09", "11:16", "11:23", "11:30", "11:37", "11:44", "11:51", "11:58", "12:05", "12:12", "12:19", "12:26", "12:33", "12:40", "12:47", "12:54", "13:01", "13:08", "13:15", "13:22", "13:29", "13:36", "13:43", "13:50", "13:57", "14:04", "14:11", "14:18", "14:25", "14:32", "14:39", "14:46", "14:53", "15:00", "15:07", "15:14", "15:21", "15:28", "15:35", "15:42", "15:49", "15:56", "16:03", "16:10", "16:17", "16:24", "16:31", "16:38", "16:45", "16:52", "16:59", "17:06", "17:13", "17:20", "17:27", "17:34", "17:41", "17:48", "17:55", "18:02", "18:09", "18:16", "18:23", "18:30", "18:37", "18:44", "18:51", "18:58", "19:05", "19:11", "19:19", "19:26", "19:33", "19:40", "19:48", "19:56", "20:03", "20:09", "20:17", "20:25", "20:32", "20:40", "20:47", "20:55", "21:02", "21:10", "21:17", "21:25", "21:32", "21:40", "21:47", "21:55", "22:02", "22:10", "22:17", "22:26", "22:35", "22:44", "22:53", "23:01", "23:09", "23:16", "23:25", "23:34", "23:42", "23:50", "00:00", "00:10"]
+    };
+
+    function loadTrainConfig() {
+      const saved = localStorage.getItem('train_station_config');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+      }
+      return DEFAULT_TRAIN_DATA;
+    }
+
+    function getTrainDisplayMode() {
+      return localStorage.getItem('train_display_mode') || 'approx';
+    }
+
+    function toggleTrainDisplayMode() {
+      const cur = getTrainDisplayMode();
+      const next = (cur === 'approx') ? 'detail' : 'approx';
+      localStorage.setItem('train_display_mode', next);
+      syncDisplayModeUI();
+      restartTrainTimer();
+      updateTrainCountdown();
+    }
+
+    function syncDisplayModeUI() {
+      const mode = getTrainDisplayMode();
+      document.getElementById('train-display-mode-label').textContent = (mode === 'approx') ? '[凡そ]' : '[詳細]';
+      document.getElementById('btn-mode-text').textContent = (mode === 'approx') ? '凡そ' : '詳細';
+      const sel = document.getElementById('select-train-display-mode');
+      if (sel) sel.value = mode;
+    }
+
+    function updateTrainCountdown() {
+      const config = loadTrainConfig();
+      const now = new Date();
+      const isHolidaySchedule = isHolidayOrWeekend(now);
+      const schedule = isHolidaySchedule ? config.weekend : config.weekday;
+      const displayMode = getTrainDisplayMode();
+
+      if (currentBottomView === 0) {
+        document.getElementById('bottom-header-title').textContent = `${config.station} - ${config.direction}`;
+      }
+      document.getElementById('train-mode-badge').textContent = isHolidaySchedule ? "土休日ダイヤ" : "平日ダイヤ";
+
+      const currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+      let nextIndex = -1;
+      for (let i = 0; i < schedule.length; i++) {
+        const [h, m] = schedule[i].split(':').map(Number);
+        if (h * 3600 + m * 60 > currentSec) {
+          nextIndex = i;
+          break;
+        }
+      }
+
+      if (nextIndex !== -1) {
+        const nextTimeStr = schedule[nextIndex];
+        const [nh, nm] = nextTimeStr.split(':').map(Number);
+        const diffSec = (nh * 3600 + nm * 60) - currentSec;
+
+        const remMin = Math.floor(diffSec / 60);
+        const remSec = diffSec % 60;
+
+        if (displayMode === 'approx') {
+          if (remMin === 0) {
+            document.getElementById('train-countdown').textContent = "まもなく発車";
+          } else {
+            document.getElementById('train-countdown').textContent = `約 ${remMin} 分後`;
+          }
+        } else {
+          document.getElementById('train-countdown').textContent = 
+            `${String(remMin).padStart(2, '0')}:${String(remSec).padStart(2, '0')}`;
+        }
+
+        document.getElementById('train-next-dep').textContent = `発車予定: ${nextTimeStr}`;
+
+        if (nextIndex + 1 < schedule.length) {
+          const subTimeStr = schedule[nextIndex + 1];
+          const [sh, sm] = subTimeStr.split(':').map(Number);
+          const subDiffMin = Math.floor(((sh * 3600 + sm * 60) - currentSec) / 60);
+          document.getElementById('train-subsequent').textContent = `${subTimeStr} (約${subDiffMin}分後)`;
+        } else {
+          document.getElementById('train-subsequent').textContent = "本日の最終便";
+        }
+      } else {
+        document.getElementById('train-countdown').textContent = "--:--";
+        document.getElementById('train-next-dep').textContent = "運行終了";
+        document.getElementById('train-subsequent').textContent = "便なし";
+      }
+    }
+
+    let trainTimer = null;
+    function restartTrainTimer() {
+      if (trainTimer) clearInterval(trainTimer);
+      const mode = getTrainDisplayMode();
+      const intervalMs = (mode === 'detail') ? 1000 : 60000;
+      trainTimer = setInterval(updateTrainCountdown, intervalMs);
+    }
+
+    // --- 8. モーダル・設定・バックアップ ---
+    function initLocationSelectors() {
+      const prefSelect = document.getElementById('select-pref');
+      prefSelect.innerHTML = '';
+      for (const pref in LOCATION_PRESETS) {
+        const opt = document.createElement('option');
+        opt.value = pref;
+        opt.textContent = pref;
+        prefSelect.appendChild(opt);
+      }
+    }
+
+    function onPrefChange() {
+      const pref = document.getElementById('select-pref').value;
+      const citySelect = document.getElementById('select-city');
+      citySelect.innerHTML = '';
+      const cities = LOCATION_PRESETS[pref] || [];
+      cities.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify(c);
+        opt.textContent = c.name;
+        citySelect.appendChild(opt);
+      });
+    }
+
+    function onLocationModeChange() {
+      const mode = document.getElementById('select-location-mode').value;
+      document.getElementById('manual-location-container').style.display = (mode === 'manual') ? 'block' : 'none';
+    }
+
+    function openTrainModal() {
+      initLocationSelectors();
+      const loc = getLocationSettings();
+      document.getElementById('select-location-mode').value = loc.mode;
+      onLocationModeChange();
+
+      if (loc.pref && LOCATION_PRESETS[loc.pref]) {
+        document.getElementById('select-pref').value = loc.pref;
+      }
+      onPrefChange();
+
+      const citySelect = document.getElementById('select-city');
+      for (let i = 0; i < citySelect.options.length; i++) {
+        const c = JSON.parse(citySelect.options[i].value);
+        if (c.name === loc.cityName) {
+          citySelect.selectedIndex = i;
+          break;
+        }
+      }
+
+      const timeCfg = getTimeSettings();
+      document.getElementById('input-commute-start').value = timeCfg.commuteStart;
+      document.getElementById('input-commute-end').value = timeCfg.commuteEnd;
+      document.getElementById('input-commute-bright').value = timeCfg.commuteBright;
+      document.getElementById('input-day-bright').value = timeCfg.dayBright;
+      document.getElementById('input-night-start').value = timeCfg.nightStart;
+      document.getElementById('input-night-bright').value = timeCfg.nightBright;
+
+      document.getElementById('select-train-display-mode').value = getTrainDisplayMode();
+
+      const config = loadTrainConfig();
+      document.getElementById('input-station').value = config.station || '';
+      document.getElementById('input-direction').value = config.direction || '';
+      document.getElementById('input-weekday').value = (config.weekday || []).join(', ');
+      document.getElementById('input-weekend').value = (config.weekend || []).join(', ');
+
+      document.getElementById('input-trash-rules').value = localStorage.getItem('hub_trash_rules') || DEFAULT_TRASH_RULES;
+
+      document.getElementById('train-modal').style.display = 'flex';
+    }
+
+    function closeTrainModal() {
+      document.getElementById('train-modal').style.display = 'none';
+    }
+
+    function toggleAccordion(id) {
+      document.getElementById(id).classList.toggle('open');
+    }
+
+    function parseTimes(raw) {
+      return raw
+        .split(/[\s,、\n]+/)
+        .map(s => s.trim())
+        .filter(s => /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(s))
+        .map(s => {
+          const [h, m] = s.split(':');
+          return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+        })
+        .sort();
+    }
+
+    function saveAllSettings() {
+      const timeSettings = {
+        commuteStart: document.getElementById('input-commute-start').value || "06:30",
+        commuteEnd: document.getElementById('input-commute-end').value || "09:00",
+        commuteBright: document.getElementById('input-commute-bright').value || "1.0",
+        dayBright: document.getElementById('input-day-bright').value || "0.75",
+        nightStart: document.getElementById('input-night-start').value || "23:00",
+        nightBright: document.getElementById('input-night-bright').value || "0.20"
+      };
+      localStorage.setItem('hub_time_settings', JSON.stringify(timeSettings));
+
+      const mode = document.getElementById('select-location-mode').value;
+      const pref = document.getElementById('select-pref').value;
+      const cityData = JSON.parse(document.getElementById('select-city').value);
+      const locSettings = {
+        mode: mode,
+        pref: pref,
+        cityName: cityData.name,
+        lat: cityData.lat,
+        lon: cityData.lon
+      };
+      localStorage.setItem('hub_location_settings', JSON.stringify(locSettings));
+
+      const selectedDisplayMode = document.getElementById('select-train-display-mode').value;
+      localStorage.setItem('train_display_mode', selectedDisplayMode);
+      syncDisplayModeUI();
+
+      const station = document.getElementById('input-station').value.trim() || '未設定駅';
+      const direction = document.getElementById('input-direction').value.trim() || '方面未設定';
+      const weekday = parseTimes(document.getElementById('input-weekday').value);
+      const weekend = parseTimes(document.getElementById('input-weekend').value);
+      localStorage.setItem('train_station_config', JSON.stringify({ station, direction, weekday, weekend }));
+
+      const trashRules = document.getElementById('input-trash-rules').value.trim();
+      localStorage.setItem('hub_trash_rules', trashRules);
+
+      closeTrainModal();
+      loadWeatherBasedOnConfig();
+      restartTrainTimer();
+      updateTrainCountdown();
+      updateTimeAndTheme();
+      renderWeekCalendar();
+    }
+
+    function exportSettingsFile() {
+      const exportData = {
+        train: loadTrainConfig(),
+        location: getLocationSettings(),
+        displayMode: getTrainDisplayMode(),
+        trashRules: localStorage.getItem('hub_trash_rules') || DEFAULT_TRASH_RULES,
+        timeSettings: getTimeSettings(),
+        bottomView: currentBottomView
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `daily-hub-settings-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function copyExportJson() {
+      const exportData = {
+        train: loadTrainConfig(),
+        location: getLocationSettings(),
+        displayMode: getTrainDisplayMode(),
+        trashRules: localStorage.getItem('hub_trash_rules') || DEFAULT_TRASH_RULES,
+        timeSettings: getTimeSettings(),
+        bottomView: currentBottomView
+      };
+      const jsonStr = JSON.stringify(exportData, null, 2);
+      navigator.clipboard.writeText(jsonStr).then(() => {
+        alert('設定JSONをクリップボードにコピーしました。');
+      }).catch(() => {
+        document.getElementById('import-json-area').value = jsonStr;
+        alert('クリップボード権限が拒否されたため、テキストエリアに出力しました。');
+      });
+    }
+
+    function applyImportJson() {
+      const raw = document.getElementById('import-json-area').value.trim();
+      if (!raw) {
+        alert('インポートするJSONを入力してください。');
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.train) localStorage.setItem('train_station_config', JSON.stringify(parsed.train));
+        else if (parsed.station) localStorage.setItem('train_station_config', JSON.stringify(parsed));
+
+        if (parsed.location) localStorage.setItem('hub_location_settings', JSON.stringify(parsed.location));
+        if (parsed.displayMode) localStorage.setItem('train_display_mode', parsed.displayMode);
+        if (parsed.trashRules) localStorage.setItem('hub_trash_rules', parsed.trashRules);
+        if (parsed.timeSettings) localStorage.setItem('hub_time_settings', JSON.stringify(parsed.timeSettings));
+        if (parsed.bottomView !== undefined) {
+          currentBottomView = parsed.bottomView;
+          localStorage.setItem('hub_bottom_view', currentBottomView);
+        }
+
+        syncDisplayModeUI();
+        updateBottomViewUI();
+        openTrainModal();
+        loadWeatherBasedOnConfig();
+        restartTrainTimer();
+        updateTrainCountdown();
+        updateTimeAndTheme();
+        renderWeekCalendar();
+        alert('インポートが完了しました。');
+      } catch(e) {
+        alert(`インポート失敗: ${e.message}`);
+      }
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('import-json-area').value = e.target.result;
+      };
+      reader.readAsText(file);
+    }
+
+    // --- 初期ロードと定期実行タイマー ---
+    syncDisplayModeUI();
+    updateBottomViewUI();
+    updateTimeAndTheme();
+    updateTrainCountdown();
+    renderWeekCalendar();
+    loadWeatherBasedOnConfig();
+    restartTrainTimer();
+
+    function alignClockTimer() {
+      updateTimeAndTheme();
+      const now = new Date();
+      const delay = (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
+      setTimeout(() => {
+        updateTimeAndTheme();
+        setInterval(updateTimeAndTheme, 60000);
+      }, delay);
+    }
+    alignClockTimer();
+
+    setInterval(loadWeatherBasedOnConfig, 15 * 60 * 1000);
+    setInterval(applyPixelShift, 10 * 60 * 1000);
+  </script>
+</body>
+</html>
