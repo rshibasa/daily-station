@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Daily Hub</title>
+  <title>daily station</title>
   <style>
     :root {
       --bg-color: #f6f7f9;
@@ -59,7 +59,6 @@
       position: relative;
     }
 
-    /* 疑似輝度制御フィルターレイヤー */
     #brightness-filter {
       position: fixed;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -70,7 +69,6 @@
       transition: opacity 0.5s ease;
     }
 
-    /* ピクセルシフト対象コンテナ */
     .container {
       display: grid;
       grid-template-columns: 1.15fr 1fr;
@@ -273,12 +271,12 @@
       font-feature-settings: "tnum";
     }
 
-    /* --- 下段: スワイプ切替モジュール (電車 or 週間カレンダー) --- */
+    /* --- 下段: スワイプ切替モジュール --- */
     .switchable-card {
       grid-column: span 2;
       position: relative;
       overflow: hidden;
-      touch-action: pan-y; /* 水平スワイプを検知 */
+      touch-action: pan-y;
     }
 
     .carousel-header-controls {
@@ -318,7 +316,6 @@
       font-weight: 700;
     }
 
-    /* ビュー切り替えコンテナ */
     .view-slider {
       display: flex;
       width: 200%;
@@ -380,7 +377,7 @@
       margin-top: 4px;
     }
 
-    /* 週間カレンダービュー */
+    /* --- 週間カレンダービュー --- */
     .week-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -394,12 +391,13 @@
       background: var(--bg-color);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 8px 4px;
-      display: flex;
-      flex-direction: column;
+      padding: 6px 4px;
+      display: grid;
+      grid-template-rows: auto auto 32px auto auto 24px;
       align-items: center;
-      justify-content: space-between;
+      justify-items: center;
       text-align: center;
+      row-gap: 2px;
     }
 
     .week-col.is-today {
@@ -408,25 +406,26 @@
     }
 
     .week-col-date {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 800;
       line-height: 1;
       font-feature-settings: "tnum";
     }
 
     .week-col-day {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 700;
-      margin-top: 3px;
     }
 
     .week-col-day.sat { color: var(--badge-weekend-sat); }
     .week-col-day.sun, .week-col-day.holiday { color: var(--badge-weekend-sun); }
 
     .week-weather-icon {
-      width: 32px;
-      height: 32px;
-      margin: 4px 0;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .week-weather-icon svg {
@@ -437,27 +436,45 @@
       stroke-width: 2;
     }
 
+    .week-weather-desc {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      line-height: 1;
+      white-space: nowrap;
+    }
+
     .week-temp {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
       color: var(--text-sub);
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .week-trash-slot {
+      width: 100%;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 2px;
     }
 
     .week-trash-text {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 700;
       color: var(--alert-text);
       background: var(--alert-bg);
-      padding: 2px 4px;
+      padding: 1px 4px;
       border-radius: 4px;
-      margin-top: 4px;
       max-width: 100%;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+      display: inline-block;
     }
 
-    /* 一時復帰アラートバッジ */
     #wake-toast {
       display: none;
       position: fixed;
@@ -473,7 +490,6 @@
       border: 1px solid rgba(255,255,255,0.2);
     }
 
-    /* --- フッター --- */
     footer {
       height: 28px;
       display: flex;
@@ -497,7 +513,7 @@
       font-weight: 600;
     }
 
-    /* --- モーダル --- */
+    /* --- モーダル共通スタイル --- */
     .modal {
       display: none;
       position: fixed;
@@ -514,7 +530,7 @@
       border-radius: 16px;
       padding: 20px;
       width: 92%;
-      max-width: 520px;
+      max-width: 540px;
       max-height: 90vh;
       overflow-y: auto;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -537,6 +553,29 @@
       font-size: 0.85rem; font-family: inherit;
     }
     .form-item textarea { height: 48px; resize: vertical; }
+
+    .mode-header-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .toggle-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-checkbox-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
 
     .location-selector-group, .time-range-group {
       display: flex;
@@ -607,11 +646,39 @@
       font-size: 0.85rem;
       font-weight: 600;
     }
+
+    /* ヘルプモーダル専用スタイル */
+    .help-section {
+      margin-bottom: 18px;
+    }
+    .help-section h4 {
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      color: var(--accent-color);
+      border-left: 3px solid var(--accent-color);
+      padding-left: 8px;
+    }
+    .help-section p, .help-section ul {
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      line-height: 1.6;
+    }
+    .help-section ul {
+      margin-left: 18px;
+      margin-top: 4px;
+    }
+    .help-section code {
+      background: var(--bg-color);
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
   </style>
 </head>
 <body onclick="handleScreenTap(event)">
 
-  <!-- 疑似輝度減光フィルター -->
   <div id="brightness-filter"></div>
   <div id="wake-toast">一時復帰中 (残り <span id="wake-sec">30</span>秒)</div>
 
@@ -668,11 +735,10 @@
       </div>
     </div>
 
-    <!-- 下段: スワイプ切替モジュール (電車 or 週間カレンダー) -->
+    <!-- 下段: スワイプ切替モジュール -->
     <div class="card switchable-card" id="bottom-card">
-      <!-- カード上部ヘッダー (共通) -->
       <div class="card-header-bar">
-        <span id="bottom-header-title" class="location-text">最寄駅 発車案内</span>
+        <span id="bottom-header-title" class="location-text">吉祥寺駅 - 中央線快速 東京方面</span>
         <div class="carousel-header-controls">
           <button class="nav-arrow-btn" onclick="prevBottomView()">◀</button>
           <div class="indicator-dots">
@@ -683,7 +749,6 @@
         </div>
       </div>
 
-      <!-- スライダー本体 -->
       <div class="view-slider" id="bottom-slider">
         <!-- ペイン1: 電車案内 -->
         <div class="slider-pane">
@@ -704,11 +769,9 @@
           </div>
         </div>
 
-        <!-- ペイン2: 週間カレンダー (7日間) -->
+        <!-- ペイン2: 週間カレンダー -->
         <div class="slider-pane">
-          <div class="week-grid" id="week-grid-container">
-            <!-- JSで動的に7日分を描画 -->
-          </div>
+          <div class="week-grid" id="week-grid-container"></div>
         </div>
       </div>
     </div>
@@ -718,23 +781,28 @@
     <div id="hub-status-text">モード: 判定中</div>
     <div class="footer-actions">
       <button onclick="toggleTrainDisplayMode()">表示: <span id="btn-mode-text">凡そ</span></button>
-      <button onclick="openTrainModal()">設定・ヘルプ</button>
+      <button onclick="openHelpModal()">使い方・ヘルプ</button>
+      <button onclick="openTrainModal()">設定</button>
       <button onclick="refreshWeatherManual()">天気更新</button>
       <button onclick="toggleThemeOverride()">テーマ切替</button>
     </div>
   </footer>
 
-  <!-- 設定モーダル -->
+  <!-- 1. 設定モーダル -->
   <div id="train-modal" class="modal">
     <div class="modal-box">
       <div class="modal-header">
-        <h3>ダッシュボード設定</h3>
-        <span style="font-size:0.75rem; color:var(--text-sub);">ローカル保存</span>
+        <h3>daily station 設定</h3>
+        <span style="font-size:0.75rem; color:var(--text-sub);">端末内ローカル保存</span>
       </div>
 
-      <!-- 画面輝度・時間帯モード設定 -->
       <div class="form-item">
-        <label>🌅 出勤準備モード (高輝度・視認性最優先)</label>
+        <div class="mode-header-label">
+          <label style="margin-bottom:0;">🌅 出勤準備モード</label>
+          <label class="toggle-checkbox-label">
+            <input type="checkbox" id="check-commute-enabled"> 有効にする
+          </label>
+        </div>
         <div class="time-range-group">
           <input type="time" id="input-commute-start" style="flex:1;">
           <span>〜</span>
@@ -747,7 +815,12 @@
       </div>
 
       <div class="form-item">
-        <label>☀️ 日中モード (通常輝度)</label>
+        <div class="mode-header-label">
+          <label style="margin-bottom:0;">☀️ 日中モード</label>
+          <label class="toggle-checkbox-label">
+            <input type="checkbox" id="check-day-enabled"> 有効にする
+          </label>
+        </div>
         <div class="time-range-group">
           <span style="font-size:0.8rem; color:var(--text-sub); flex:1;">出勤終了後 〜 深夜前</span>
           <select id="input-day-bright" style="flex:0.8;">
@@ -759,7 +832,12 @@
       </div>
 
       <div class="form-item">
-        <label>🌙 深夜モード (減光・省電力・ダーク固定)</label>
+        <div class="mode-header-label">
+          <label style="margin-bottom:0;">🌙 深夜モード (減光・省電力)</label>
+          <label class="toggle-checkbox-label">
+            <input type="checkbox" id="check-night-enabled"> 有効にする
+          </label>
+        </div>
         <div class="time-range-group">
           <input type="time" id="input-night-start" style="flex:1;">
           <span>〜</span>
@@ -772,7 +850,6 @@
         </div>
       </div>
 
-      <!-- 位置情報設定セクション -->
       <div class="form-item">
         <label>天気予報の取得地点</label>
         <select id="select-location-mode" onchange="onLocationModeChange()">
@@ -789,7 +866,6 @@
         </div>
       </div>
 
-      <!-- 電車表示モード設定 -->
       <div class="form-item">
         <label>電車の残時間カウントダウン方式</label>
         <select id="select-train-display-mode">
@@ -798,14 +874,13 @@
         </select>
       </div>
 
-      <!-- 時刻表設定セクション -->
       <div class="form-item">
         <label>駅名</label>
-        <input type="text" id="input-station" placeholder="例: 円山公園駅">
+        <input type="text" id="input-station" placeholder="例: 吉祥寺駅">
       </div>
       <div class="form-item">
         <label>路線・方面</label>
-        <input type="text" id="input-direction" placeholder="例: 東西線 新さっぽろ方面">
+        <input type="text" id="input-direction" placeholder="例: 中央線快速 東京方面">
       </div>
       <div class="form-item">
         <label>平日ダイヤ (HH:MM形式 / カンマまたは改行区切り)</label>
@@ -816,16 +891,14 @@
         <textarea id="input-weekend" placeholder="例: 06:10, 06:20, 06:30..."></textarea>
       </div>
 
-      <!-- ごみ出しスケジュール設定 -->
       <div class="form-item">
         <label>ごみ収集ルール設定 (1行につき1ルール: 曜日:ごみ名)</label>
         <textarea id="input-trash-rules" placeholder="例:
-火:燃やせるごみ
-金:燃やせるごみ
-第2水:びん・缶・ペットボトル" style="height:60px;"></textarea>
+火:燃やすごみ
+金:燃やすごみ
+第2木:ビン・缶・ペットボトル" style="height:60px;"></textarea>
       </div>
 
-      <!-- バックアップ / 移行 -->
       <div class="collapsible-section">
         <div class="collapsible-header" onclick="toggleAccordion('backup-content')">
           <span>📦 データのバックアップ / 移行</span>
@@ -845,25 +918,82 @@
         </div>
       </div>
 
-      <!-- ヘルプ -->
-      <div class="collapsible-section">
-        <div class="collapsible-header" onclick="toggleAccordion('help-content')">
-          <span>📖 使い方・スワイプ切替について</span>
-          <span>▼</span>
-        </div>
-        <div id="help-content" class="collapsible-content">
-          <strong>1. 下段モジュールのスワイプ切替:</strong><br>
-          下段モジュールを左右にスワイプ（または右上の矢印ボタンをタップ）することで、「電車発車案内」と「週間カレンダー（7日間の天気・ごみ収集）」を切り替えられます。状態は記憶されます。<br><br>
-          <strong>2. 時間帯モードと疑似輝度:</strong><br>
-          出勤時100%、日中75%、深夜帯20%（画面タップで30秒間通常復帰）で液晶の焼き付き・劣化を抑止します。<br><br>
-          <strong>3. ごみ出しルールの書き方:</strong><br>
-          「火:燃やせるごみ」「第2水:プラ」のように記述します。週間カレンダーの各曜日の枠内にも自動反映されます。
-        </div>
-      </div>
-
       <div class="modal-footer">
         <button onclick="closeTrainModal()">閉じる</button>
         <button onclick="saveAllSettings()" style="background:var(--accent-color); color:#fff; border:none;">設定を保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 使い方・ヘルプモーダル -->
+  <div id="help-modal" class="modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>📖 daily station 使い方ガイド</h3>
+        <span style="font-size:0.75rem; color:var(--text-sub);">ヘルプ・運用Tips</span>
+      </div>
+
+      <div class="help-section">
+        <h4>1. iPadでの全画面・常時卓上運用</h4>
+        <p>古いiPadを専用端末として設置する場合の推奨設定です：</p>
+        <ul>
+          <li><strong>PWA化（アドレスバーの非表示）:</strong> Safariでこのページを開き、共有アイコンから「ホーム画面に追加」を実行して起動してください。</li>
+          <li><strong>自動スリープの解除:</strong> iPadの「設定」アプリ ＞「画面表示と明るさ」＞「自動ロック」を「なし」に設定します。</li>
+          <li><strong>アクセスガイド（推奨）:</strong> iPadの「設定」＞「アクセシビリティ」＞「アクセスガイド」を有効にし、本アプリ起動中に電源ボタンをトリプルクリックすると、誤タッチやホームバーの誤操作を完全に防止できます。</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>2. 焼き付き防止と時間帯・輝度制御</h4>
+        <p>液晶ディスプレイの同一素子劣化・残像焼き付きを防ぐ機能です：</p>
+        <ul>
+          <li><strong>ピクセルシフト:</strong> 10分ごとにメイン画面全体をランダムに -3px〜+3px 微小移動させ、同じ線や文字の素子固定を防ぎます。</li>
+          <li><strong>3つの時間帯モード:</strong>
+            <ul>
+              <li><code>出勤準備</code>: 視認性最優先（輝度100%）。</li>
+              <li><code>日中</code>: 卓上で邪魔にならない通常光量（輝度75%前後）。</li>
+              <li><code>深夜</code>: 就寝時に眩しくない大幅減光（輝度20%前後）＋強制ダークテーマ。</li>
+            </ul>
+          </li>
+          <li><strong>深夜のタッチ一時復帰:</strong> 深夜モード中に画面のカード余白をタップすると、30秒間だけ最高輝度（100%）に一時復帰します。</li>
+          <li><strong>モードのOFF機能:</strong> 各モードを無効に設定すると、その時間帯は減光を行わず高輝度（100%）で動作します。</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>3. 電車発車案内と週間カレンダー（下段）</h4>
+        <ul>
+          <li><strong>左右スワイプ切替:</strong> 下段モジュールを左右にスワイプ（または右上の矢印ボタン）することで、「電車カウントダウン」と「週間カレンダー」を切り替えます。選択状態は自動保存されます。</li>
+          <li><strong>凡そモード / 詳細モード:</strong> フッター左の「表示」ボタンで切り替え可能。「凡そ」は1分単位（約○分後）で更新されるため、毎秒の描画による視界のチラつきを完全に排除できます。</li>
+          <li><strong>祝日連動:</strong> 春分・秋分や振替休日を含め自動計算されます。祝日はカレンダーが赤字になり、電車も自動で「土休日ダイヤ」が適用されます。</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>4. ごみ収集リマインダーの登録書式</h4>
+        <p>設定画面のテキストエリアに、1行につき1ルールで記述します：</p>
+        <ul>
+          <li><strong>毎週指定:</strong> <code>曜日:ごみ名</code>（例: <code>火:燃やすごみ</code>）</li>
+          <li><strong>第N週指定:</strong> <code>第N曜日:ごみ名</code>（例: <code>第2木:ビン・缶</code>、<code>第4水:プラ</code>）</li>
+          <li>※今日・明日のバッジ表示に加え、週間カレンダーの各曜日の枠内にも自動配置されます。</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>5. 天気予報・傘アラート・地点指定</h4>
+        <ul>
+          <li><strong>地点選択:</strong> GPSが搭載されていないWi-Fi版iPadや屋内設置時は、「手動選択」から都道府県・都市を指定してください。</li>
+          <li><strong>傘アラート:</strong> 当日の最大降水確率が40%以上になると、天気モジュール右上に「☂️ 傘が必要」バッジが自動点灯します。</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>6. 設定データのバックアップと移行</h4>
+        <p>設定画面の「データのバックアップ / 移行」から、全設定（時刻表、地点、時間帯、ごみ収集ルール）をJSONファイルとして保存、またはクリップボードにコピーできます。PCで作成した設定をiPadへそのまま貼り付けて復元可能です。</p>
+      </div>
+
+      <div class="modal-footer">
+        <button onclick="closeHelpModal()" style="background:var(--accent-color); color:#fff; border:none;">閉じる</button>
       </div>
     </div>
   </div>
@@ -926,10 +1056,13 @@
 
     // --- 1. 時間帯モード・輝度制御・ピクセルシフト ---
     const DEFAULT_TIME_SETTINGS = {
+      commuteEnabled: true,
       commuteStart: "06:30",
       commuteEnd: "09:00",
       commuteBright: "1.0",
+      dayEnabled: true,
       dayBright: "0.75",
+      nightEnabled: true,
       nightStart: "23:00",
       nightBright: "0.20"
     };
@@ -937,7 +1070,7 @@
     function getTimeSettings() {
       const saved = localStorage.getItem('hub_time_settings');
       if (saved) {
-        try { return JSON.parse(saved); } catch(e) {}
+        try { return { ...DEFAULT_TIME_SETTINGS, ...JSON.parse(saved) }; } catch(e) {}
       }
       return DEFAULT_TIME_SETTINGS;
     }
@@ -949,7 +1082,8 @@
     function handleScreenTap(event) {
       if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls')) return;
       const currentMode = getCurrentTimeMode();
-      if (currentMode === 'night' && !isTemporaryWake) {
+      const cfg = getTimeSettings();
+      if (currentMode === 'night' && cfg.nightEnabled && !isTemporaryWake) {
         triggerTemporaryWake();
       }
     }
@@ -991,17 +1125,21 @@
       const cEnd = timeToMinutes(cfg.commuteEnd);
       const nStart = timeToMinutes(cfg.nightStart);
 
+      let inCommute = false;
       if (cStart < cEnd) {
-        if (curMin >= cStart && curMin < cEnd) return 'commute';
+        inCommute = (curMin >= cStart && curMin < cEnd);
       } else {
-        if (curMin >= cStart || curMin < cEnd) return 'commute';
+        inCommute = (curMin >= cStart || curMin < cEnd);
       }
+      if (inCommute) return 'commute';
 
+      let inNight = false;
       if (nStart > cStart) {
-        if (curMin >= nStart || curMin < cStart) return 'night';
+        inNight = (curMin >= nStart || curMin < cStart);
       } else {
-        if (curMin >= nStart && curMin < cStart) return 'night';
+        inNight = (curMin >= nStart && curMin < cStart);
       }
+      if (inNight) return 'night';
 
       return 'day';
     }
@@ -1021,50 +1159,37 @@
 
     // --- 2. 主要地点マスターデータ ---
     const LOCATION_PRESETS = {
-      "北海道": [
-        { name: "札幌市 中央区", lat: 43.0553, lon: 141.3408 },
-        { name: "札幌市 北区", lat: 43.0908, lon: 141.3408 },
-        { name: "札幌市 東区", lat: 43.0768, lon: 141.3644 },
-        { name: "札幌市 白石区", lat: 43.0483, lon: 141.4055 },
-        { name: "札幌市 豊平区", lat: 43.0312, lon: 141.3788 },
-        { name: "札幌市 南区", lat: 42.9904, lon: 141.3534 },
-        { name: "札幌市 西区", lat: 43.0747, lon: 141.3005 },
-        { name: "札幌市 厚別区", lat: 43.0381, lon: 141.4735 },
-        { name: "札幌市 手稲区", lat: 43.1264, lon: 141.2443 },
-        { name: "札幌市 清田区", lat: 43.0016, lon: 141.4253 },
-        { name: "函館市", lat: 41.7687, lon: 140.7288 },
-        { name: "旭川市", lat: 43.7706, lon: 142.3649 },
-        { name: "小樽市", lat: 43.1907, lon: 140.9947 },
-        { name: "帯広市", lat: 42.9239, lon: 143.1961 },
-        { name: "釧路市", lat: 42.9849, lon: 144.3818 },
-        { name: "千歳市", lat: 42.8228, lon: 141.6521 }
-      ],
       "東京都": [
+        { name: "武蔵野市 (吉祥寺)", lat: 35.7032, lon: 139.5798 },
         { name: "新宿区", lat: 35.6938, lon: 139.7034 },
         { name: "千代田区 (東京駅)", lat: 35.6812, lon: 139.7671 },
         { name: "渋谷区", lat: 35.6580, lon: 139.7016 },
         { name: "港区", lat: 35.6586, lon: 139.7514 },
         { name: "品川区", lat: 35.6092, lon: 139.7302 },
-        { name: "世田谷区", lat: 35.6466, lon: 139.6532 },
-        { name: "八王子市", lat: 35.6552, lon: 139.3239 },
-        { name: "立川市", lat: 35.6995, lon: 139.4138 }
+        { name: "立川市", lat: 35.6995, lon: 139.4138 },
+        { name: "八王子市", lat: 35.6552, lon: 139.3239 }
       ],
       "神奈川県": [
-        { name: "横浜市 中区", lat: 35.4446, lon: 139.6428 },
         { name: "横浜市 西区 (横浜駅)", lat: 35.4660, lon: 139.6226 },
         { name: "川崎市 川崎区", lat: 35.5309, lon: 139.7029 }
       ],
+      "北海道": [
+        { name: "札幌市 中央区", lat: 43.0553, lon: 141.3408 },
+        { name: "札幌市 北区", lat: 43.0908, lon: 141.3408 },
+        { name: "札幌市 西区", lat: 43.0747, lon: 141.3005 },
+        { name: "旭川市", lat: 43.7706, lon: 142.3649 },
+        { name: "函館市", lat: 41.7687, lon: 140.7288 }
+      ],
       "愛知県": [
-        { name: "名古屋市 中区 (栄)", lat: 35.1685, lon: 136.9064 },
-        { name: "名古屋市 中村区 (名駅)", lat: 35.1709, lon: 136.8815 }
+        { name: "名古屋市 中村区 (名駅)", lat: 35.1709, lon: 136.8815 },
+        { name: "名古屋市 中区 (栄)", lat: 35.1685, lon: 136.9064 }
       ],
       "大阪府": [
         { name: "大阪市 北区 (梅田)", lat: 34.7025, lon: 135.4959 },
         { name: "大阪市 中央区 (難波)", lat: 34.6666, lon: 135.5003 }
       ],
       "京都府": [
-        { name: "京都市 下京区 (京都駅)", lat: 34.9858, lon: 135.7588 },
-        { name: "京都市 中京区", lat: 35.0116, lon: 135.7681 }
+        { name: "京都市 下京区 (京都駅)", lat: 34.9858, lon: 135.7588 }
       ],
       "福岡県": [
         { name: "福岡市 博多区 (博多駅)", lat: 33.5902, lon: 130.4207 },
@@ -1077,6 +1202,20 @@
         { name: "広島市 中区", lat: 34.3853, lon: 132.4553 }
       ]
     };
+
+    function getLocationSettings() {
+      const saved = localStorage.getItem('hub_location_settings');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+      }
+      return {
+        mode: "manual",
+        pref: "東京都",
+        cityName: "武蔵野市 (吉祥寺)",
+        lat: 35.7032,
+        lon: 139.5798
+      };
+    }
 
     // --- 3. 日時・時計・ごみリマインダー・テーマ ---
     function getWareki(year) {
@@ -1122,12 +1261,17 @@
       const override = localStorage.getItem('theme_override');
       const mode = getCurrentTimeMode();
       const cfg = getTimeSettings();
+      const now = new Date();
 
       let isDark = false;
       if (override === 'dark') isDark = true;
       else if (override === 'light') isDark = false;
       else {
-        isDark = (mode === 'night') || (now => now.getHours() >= 18 || now.getHours() < 6)(new Date());
+        if (mode === 'night' && cfg.nightEnabled) {
+          isDark = true;
+        } else {
+          isDark = (now.getHours() >= 18 || now.getHours() < 6);
+        }
       }
 
       if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
@@ -1136,16 +1280,33 @@
       if (!isTemporaryWake) {
         let bLevel = 1.0;
         let modeLabel = "日中";
+
         if (mode === 'commute') {
-          bLevel = parseFloat(cfg.commuteBright);
-          modeLabel = "出勤準備";
+          if (cfg.commuteEnabled) {
+            bLevel = parseFloat(cfg.commuteBright);
+            modeLabel = "出勤準備";
+          } else {
+            bLevel = 1.0;
+            modeLabel = "出勤(OFF:高輝度)";
+          }
         } else if (mode === 'night') {
-          bLevel = parseFloat(cfg.nightBright);
-          modeLabel = "深夜(減光)";
+          if (cfg.nightEnabled) {
+            bLevel = parseFloat(cfg.nightBright);
+            modeLabel = "深夜(減光)";
+          } else {
+            bLevel = 1.0;
+            modeLabel = "深夜(OFF:高輝度)";
+          }
         } else {
-          bLevel = parseFloat(cfg.dayBright);
-          modeLabel = "日中";
+          if (cfg.dayEnabled) {
+            bLevel = parseFloat(cfg.dayBright);
+            modeLabel = "日中";
+          } else {
+            bLevel = 1.0;
+            modeLabel = "日中(OFF:高輝度)";
+          }
         }
+
         applyBrightness(bLevel);
         document.getElementById('hub-status-text').textContent = 
           `モード: ${modeLabel} (輝度${Math.round(bLevel * 100)}%)`;
@@ -1160,7 +1321,7 @@
       updateTimeAndTheme();
     }
 
-    const DEFAULT_TRASH_RULES = "火:燃やせるごみ\n金:燃やせるごみ\n第2水:びん・缶・ペットボトル\n第4水:びん・缶・ペットボトル";
+    const DEFAULT_TRASH_RULES = "火:燃やすごみ\n金:燃やすごみ\n水:有害・危険ごみ\n第2木:ビン・缶・ペットボトル\n第4木:ビン・缶・ペットボトル";
 
     function getTrashForDate(targetDate) {
       const saved = localStorage.getItem('hub_trash_rules') || DEFAULT_TRASH_RULES;
@@ -1207,26 +1368,12 @@
 
     function resolveWeatherDisplay(code) {
       if (code === 0) return { desc: '快晴', icon: WEATHER_ICONS.sun };
-      if (code === 1 || code === 2) return { desc: '晴れ時々曇', icon: WEATHER_ICONS.cloudSun };
+      if (code === 1 || code === 2) return { desc: '晴/曇', icon: WEATHER_ICONS.cloudSun };
       if (code === 3 || code === 45 || code === 48) return { desc: '曇り', icon: WEATHER_ICONS.cloud };
       if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return { desc: '雨', icon: WEATHER_ICONS.rain };
       if ((code >= 71 && code <= 77) || code === 85 || code === 86) return { desc: '雪', icon: WEATHER_ICONS.snow };
       if (code >= 95) return { desc: '雷雨', icon: WEATHER_ICONS.thunder };
-      return { desc: '晴れ/曇り', icon: WEATHER_ICONS.cloudSun };
-    }
-
-    function getLocationSettings() {
-      const saved = localStorage.getItem('hub_location_settings');
-      if (saved) {
-        try { return JSON.parse(saved); } catch(e) {}
-      }
-      return {
-        mode: "manual",
-        pref: "北海道",
-        cityName: "札幌市 中央区",
-        lat: 43.0553,
-        lon: 141.3408
-      };
+      return { desc: '晴/曇', icon: WEATHER_ICONS.cloudSun };
     }
 
     function refreshWeatherManual() {
@@ -1289,7 +1436,6 @@
         const now = new Date();
         document.getElementById('weather-updated').textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} 更新`;
 
-        // 週間天気データを保持してカレンダーを描画
         globalDailyWeatherData = data.daily;
         renderWeekCalendar();
       } catch(e) {
@@ -1297,8 +1443,8 @@
       }
     }
 
-    // --- 5. 下段モジュール（電車 ⇄ 週間カレンダー）切り替え & スワイプ制御 ---
-    let currentBottomView = parseInt(localStorage.getItem('hub_bottom_view') || "0", 10); // 0: 電車, 1: カレンダー
+    // --- 5. 下段モジュール切り替え & スワイプ制御 ---
+    let currentBottomView = parseInt(localStorage.getItem('hub_bottom_view') || "0", 10);
 
     function updateBottomViewUI() {
       const slider = document.getElementById('bottom-slider');
@@ -1327,7 +1473,6 @@
       updateBottomViewUI();
     }
 
-    // スワイプ（タッチジェスチャー）の実装
     let touchStartX = 0;
     let touchStartY = 0;
     const bottomCard = document.getElementById('bottom-card');
@@ -1340,13 +1485,10 @@
     bottomCard.addEventListener('touchend', (e) => {
       const diffX = e.changedTouches[0].screenX - touchStartX;
       const diffY = e.changedTouches[0].screenY - touchStartY;
-      // 水平方向へのスワイプ判定（50px以上かつ水平移動が支配的）
       if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
         if (diffX < 0) {
-          // 左スワイプ -> 次へ
           currentBottomView = 1;
         } else {
-          // 右スワイプ -> 前へ
           currentBottomView = 0;
         }
         updateBottomViewUI();
@@ -1382,8 +1524,8 @@
           dayClass += ' sun';
         }
 
-        // 天気アイコン & 気温
         let weatherIconHtml = '';
+        let weatherDescText = '--';
         let tempHtml = '--°/--°';
         if (globalDailyWeatherData && globalDailyWeatherData.time && globalDailyWeatherData.time[i]) {
           const wCode = globalDailyWeatherData.weather_code[i];
@@ -1391,19 +1533,20 @@
           const minT = Math.round(globalDailyWeatherData.temperature_2m_min[i]);
           const wInfo = resolveWeatherDisplay(wCode);
           weatherIconHtml = wInfo.icon;
+          weatherDescText = wInfo.desc;
           tempHtml = `${maxT}°/${minT}°`;
         }
 
-        // ごみ
         const trash = getTrashForDate(d);
-        const trashHtml = (trash !== 'なし') ? `<div class="week-trash-text" title="${trash}">${trash}</div>` : '';
+        const trashContent = (trash !== 'なし') ? `<div class="week-trash-text" title="${trash}">${trash}</div>` : '';
 
         col.innerHTML = `
           <div class="week-col-date">${d.getMonth() + 1}/${d.getDate()}</div>
           <div class="${dayClass}">${dayLabel}</div>
           <div class="week-weather-icon">${weatherIconHtml}</div>
+          <div class="week-weather-desc">${weatherDescText}</div>
           <div class="week-temp">${tempHtml}</div>
-          ${trashHtml}
+          <div class="week-trash-slot">${trashContent}</div>
         `;
         container.appendChild(col);
       }
@@ -1411,10 +1554,52 @@
 
     // --- 7. 電車発車案内ロジック ---
     const DEFAULT_TRAIN_DATA = {
-      station: "円山公園駅",
-      direction: "東西線 新さっぽろ方面",
-      weekday: ["06:10", "06:20", "06:30", "06:40", "06:49", "06:58", "07:07", "07:16", "07:23", "07:30", "07:36", "07:40", "07:44", "07:49", "07:53", "07:57", "08:01", "08:05", "08:09", "08:13", "08:18", "08:22", "08:26", "08:31", "08:35", "08:39", "08:43", "08:47", "08:52", "08:56", "09:00", "09:04", "09:09", "09:13", "09:18", "09:22", "09:26", "09:30", "09:34", "09:39", "09:44", "09:52", "09:59", "10:06", "10:13", "10:20", "10:27", "10:34", "10:41", "10:48", "10:55", "11:02", "11:09", "11:16", "11:23", "11:30", "11:37", "11:44", "11:51", "11:58", "12:05", "12:12", "12:19", "12:26", "12:33", "12:40", "12:47", "12:54", "13:01", "13:08", "13:15", "13:22", "13:29", "13:36", "13:43", "13:50", "13:57", "14:04", "14:11", "14:18", "14:25", "14:32", "14:39", "14:46", "14:53", "15:00", "15:07", "15:14", "15:21", "15:28", "15:35", "15:42", "15:49", "15:56", "16:03", "16:10", "16:17", "16:24", "16:32", "16:39", "16:46", "16:52", "16:59", "17:05", "17:10", "17:15", "17:20", "17:25", "17:30", "17:35", "17:40", "17:45", "17:51", "17:56", "18:01", "18:06", "18:11", "18:16", "18:21", "18:26", "18:32", "18:37", "18:42", "18:47", "18:53", "18:58", "19:04", "19:09", "19:14", "19:20", "19:25", "19:30", "19:35", "19:40", "19:46", "19:52", "19:57", "20:04", "20:11", "20:19", "20:27", "20:34", "20:42", "20:49", "20:57", "21:04", "21:12", "21:19", "21:27", "21:34", "21:42", "21:49", "21:57", "22:04", "22:12", "22:19", "22:28", "22:37", "22:45", "22:54", "23:01", "23:09", "23:18", "23:26", "23:34", "23:42", "23:50", "00:00", "00:10"],
-      weekend: ["06:10", "06:20", "06:30", "06:40", "06:48", "06:58", "07:07", "07:15", "07:24", "07:32", "07:39", "07:46", "07:53", "08:00", "08:07", "08:14", "08:21", "08:28", "08:35", "08:42", "08:49", "08:56", "09:03", "09:10", "09:17", "09:24", "09:31", "09:38", "09:45", "09:52", "09:59", "10:06", "10:13", "10:20", "10:27", "10:34", "10:41", "10:48", "10:55", "11:02", "11:09", "11:16", "11:23", "11:30", "11:37", "11:44", "11:51", "11:58", "12:05", "12:12", "12:19", "12:26", "12:33", "12:40", "12:47", "12:54", "13:01", "13:08", "13:15", "13:22", "13:29", "13:36", "13:43", "13:50", "13:57", "14:04", "14:11", "14:18", "14:25", "14:32", "14:39", "14:46", "14:53", "15:00", "15:07", "15:14", "15:21", "15:28", "15:35", "15:42", "15:49", "15:56", "16:03", "16:10", "16:17", "16:24", "16:31", "16:38", "16:45", "16:52", "16:59", "17:06", "17:13", "17:20", "17:27", "17:34", "17:41", "17:48", "17:55", "18:02", "18:09", "18:16", "18:23", "18:30", "18:37", "18:44", "18:51", "18:58", "19:05", "19:11", "19:19", "19:26", "19:33", "19:40", "19:48", "19:56", "20:03", "20:09", "20:17", "20:25", "20:32", "20:40", "20:47", "20:55", "21:02", "21:10", "21:17", "21:25", "21:32", "21:40", "21:47", "21:55", "22:02", "22:10", "22:17", "22:26", "22:35", "22:44", "22:53", "23:01", "23:09", "23:16", "23:25", "23:34", "23:42", "23:50", "00:00", "00:10"]
+      station: "吉祥寺駅",
+      direction: "中央線快速 東京方面",
+      weekday: [
+        "05:01", "05:18", "05:35", "05:49",
+        "06:02", "06:12", "06:21", "06:30", "06:38", "06:45", "06:52", "06:58",
+        "07:05", "07:11", "07:16", "07:22", "07:27", "07:33", "07:38", "07:44", "07:49", "07:55",
+        "08:00", "08:06", "08:11", "08:17", "08:22", "08:28", "08:33", "08:39", "08:45", "08:52", "08:59",
+        "09:06", "09:14", "09:22", "09:31", "09:41", "09:51",
+        "10:01", "10:11", "10:21", "10:31", "10:41", "10:51",
+        "11:01", "11:11", "11:21", "11:31", "11:41", "11:51",
+        "12:01", "12:11", "12:21", "12:31", "12:41", "12:51",
+        "13:01", "13:11", "13:21", "13:31", "13:41", "13:51",
+        "14:01", "14:11", "14:21", "14:31", "14:41", "14:51",
+        "15:01", "15:11", "15:21", "15:31", "15:41", "15:51",
+        "16:01", "16:11", "16:21", "16:31", "16:41", "16:51",
+        "17:00", "17:09", "17:18", "17:27", "17:36", "17:45", "17:54",
+        "18:03", "18:12", "18:21", "18:30", "18:39", "18:48", "18:57",
+        "19:06", "19:15", "19:24", "19:33", "19:42", "19:51",
+        "20:01", "20:11", "20:21", "20:31", "20:41", "20:51",
+        "21:02", "21:13", "21:24", "21:35", "21:47", "21:58",
+        "22:10", "22:22", "22:35", "22:48",
+        "23:01", "23:15", "23:30", "23:45",
+        "00:03"
+      ],
+      weekend: [
+        "05:01", "05:20", "05:38", "05:52",
+        "06:06", "06:19", "06:31", "06:43", "06:54",
+        "07:05", "07:15", "07:25", "07:35", "07:44", "07:54",
+        "08:04", "08:14", "08:24", "08:34", "08:44", "08:54",
+        "09:05", "09:15", "09:25", "09:35", "09:45", "09:55",
+        "10:05", "10:15", "10:25", "10:35", "10:45", "10:55",
+        "11:05", "11:15", "11:25", "11:35", "11:45", "11:55",
+        "12:05", "12:15", "12:25", "12:35", "12:45", "12:55",
+        "13:05", "13:15", "13:25", "13:35", "13:45", "13:55",
+        "14:05", "14:15", "14:25", "14:35", "14:45", "14:55",
+        "15:05", "15:15", "15:25", "15:35", "15:45", "15:55",
+        "16:05", "16:15", "16:25", "16:35", "16:45", "16:55",
+        "17:05", "17:15", "17:25", "17:35", "17:45", "17:55",
+        "18:05", "18:15", "18:25", "18:35", "18:45", "18:55",
+        "19:05", "19:15", "19:25", "19:35", "19:46", "19:57",
+        "20:09", "20:21", "20:33", "20:46", "20:58",
+        "21:11", "21:24", "21:37", "21:50",
+        "22:04", "22:18", "22:33", "22:48",
+        "23:03", "23:20", "23:38", "23:55",
+        "00:15"
+      ]
     };
 
     function loadTrainConfig() {
@@ -1564,10 +1749,15 @@
       }
 
       const timeCfg = getTimeSettings();
+      document.getElementById('check-commute-enabled').checked = (timeCfg.commuteEnabled !== false);
       document.getElementById('input-commute-start').value = timeCfg.commuteStart;
       document.getElementById('input-commute-end').value = timeCfg.commuteEnd;
       document.getElementById('input-commute-bright').value = timeCfg.commuteBright;
+
+      document.getElementById('check-day-enabled').checked = (timeCfg.dayEnabled !== false);
       document.getElementById('input-day-bright').value = timeCfg.dayBright;
+
+      document.getElementById('check-night-enabled').checked = (timeCfg.nightEnabled !== false);
       document.getElementById('input-night-start').value = timeCfg.nightStart;
       document.getElementById('input-night-bright').value = timeCfg.nightBright;
 
@@ -1588,6 +1778,14 @@
       document.getElementById('train-modal').style.display = 'none';
     }
 
+    function openHelpModal() {
+      document.getElementById('help-modal').style.display = 'flex';
+    }
+
+    function closeHelpModal() {
+      document.getElementById('help-modal').style.display = 'none';
+    }
+
     function toggleAccordion(id) {
       document.getElementById(id).classList.toggle('open');
     }
@@ -1606,10 +1804,13 @@
 
     function saveAllSettings() {
       const timeSettings = {
+        commuteEnabled: document.getElementById('check-commute-enabled').checked,
         commuteStart: document.getElementById('input-commute-start').value || "06:30",
         commuteEnd: document.getElementById('input-commute-end').value || "09:00",
         commuteBright: document.getElementById('input-commute-bright').value || "1.0",
+        dayEnabled: document.getElementById('check-day-enabled').checked,
         dayBright: document.getElementById('input-day-bright').value || "0.75",
+        nightEnabled: document.getElementById('check-night-enabled').checked,
         nightStart: document.getElementById('input-night-start').value || "23:00",
         nightBright: document.getElementById('input-night-bright').value || "0.20"
       };
@@ -1661,7 +1862,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `daily-hub-settings-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `daily-station-settings-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
