@@ -16,7 +16,7 @@
       --accent-color: #1a73e8;
       --badge-weekend-sat: #1a73e8;
       --badge-weekend-sun: #d93025;
-      --icon-color: #3c4043;
+      --icon-color: #2c3036;
       --alert-bg: #e8f0fe;
       --alert-text: #1967d2;
       --today-border: #1a73e8;
@@ -31,7 +31,7 @@
       --accent-color: #8ab4f8;
       --badge-weekend-sat: #8ab4f8;
       --badge-weekend-sun: #f28b82;
-      --icon-color: #dadce0;
+      --icon-color: #e3e5e8;
       --alert-bg: #1e2a38;
       --alert-text: #8ab4f8;
       --today-border: #8ab4f8;
@@ -217,7 +217,7 @@
       height: 100%;
       fill: none;
       stroke: var(--icon-color);
-      stroke-width: 1.75;
+      stroke-width: 1.8;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
@@ -415,10 +415,16 @@
     .week-col-day {
       font-size: 0.75rem;
       font-weight: 700;
+      white-space: nowrap;
     }
 
     .week-col-day.sat { color: var(--badge-weekend-sat); }
-    .week-col-day.sun, .week-col-day.holiday { color: var(--badge-weekend-sun); }
+    .week-col-day.sun { color: var(--badge-weekend-sun); }
+    .week-col-day.holiday {
+      color: var(--badge-weekend-sun);
+      font-size: 0.7rem;
+      letter-spacing: -0.5px;
+    }
 
     .week-weather-icon {
       width: 28px;
@@ -433,7 +439,9 @@
       height: 100%;
       fill: none;
       stroke: var(--icon-color);
-      stroke-width: 2;
+      stroke-width: 2.1;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .week-weather-desc {
@@ -708,7 +716,7 @@
       </div>
       <div class="weather-main-layout">
         <div class="weather-icon-wrap" id="weather-icon-container">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.93 4.93l1.8 1.8M17.27 17.27l1.8 1.8M4.93 19.07l1.8-1.8M17.27 6.73l1.8-1.8"/></svg>
         </div>
         <div class="temp-block">
           <div id="temperature" class="temp-val">--°</div>
@@ -1356,14 +1364,45 @@
       document.getElementById('trash-tomorrow').textContent = getTrashForDate(tomorrow);
     }
 
-    // --- 4. 天気とSVGベクターアイコン ---
+    // --- 4. 洗練されたミニマル・デュオトーンSVGアイコン群 ---
     const WEATHER_ICONS = {
-      sun: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
-      cloudSun: `<svg viewBox="0 0 24 24"><path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41"/><path d="M15.5 17a4.5 4.5 0 0 0-4.5-4.5 4.4 4.4 0 0 0-.8.08 6 6 0 1 0-7.2 7.2A4.5 4.5 0 0 0 7.5 21h8a4.5 4.5 0 0 0 0-9z"/></svg>`,
-      cloud: `<svg viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>`,
-      rain: `<svg viewBox="0 0 24 24"><path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9"/><line x1="8" y1="19" x2="8" y2="21"/><line x1="8" y1="13" x2="8" y2="15"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="12" y1="15" x2="12" y2="17"/><line x1="16" y1="19" x2="16" y2="21"/><line x1="16" y1="13" x2="16" y2="15"/></svg>`,
-      snow: `<svg viewBox="0 0 24 24"><path d="M20 17.58A4.5 4.5 0 0 0 17.5 9h-1.79A7 7 0 1 0 5 16.5"/><line x1="8" y1="15" x2="8" y2="15.01"/><line x1="8" y1="19" x2="8" y2="19.01"/><line x1="12" y1="17" x2="12" y2="17.01"/><line x1="12" y1="21" x2="12" y2="21.01"/><line x1="16" y1="15" x2="16" y2="15.01"/><line x1="16" y1="19" x2="16" y2="19.01"/></svg>`,
-      thunder: `<svg viewBox="0 0 24 24"><path d="M19 16.9A4.5 4.5 0 0 0 17.5 9h-1.8A7 7 0 1 0 4 15.9"/><polygon points="13 11 9 17 14 17 11 23 19 15 14 15 17 11 13 11"/></svg>`
+      // 快晴
+      sun: `<svg viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4.5"/>
+        <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.93 4.93l1.8 1.8M17.27 17.27l1.8 1.8M4.93 19.07l1.8-1.8M17.27 6.73l1.8-1.8"/>
+      </svg>`,
+
+      // 晴れ時々曇（太陽を左上に押し出し、明確な放射光と円弧を露出）
+      cloudSun: `<svg viewBox="0 0 24 24">
+        <circle cx="8" cy="8" r="3.8"/>
+        <path d="M8 1.8V3.5M2.5 8h1.7M4.1 4.1l1.2 1.2M13.2 4.1l-1.1 1.1M1.8 12.5h1.2"/>
+        <path d="M8 19.5h9.5a4 4 0 0 0 .5-7.97A5 5 0 0 0 8.5 12a4 4 0 0 0-.5 7.5z"/>
+      </svg>`,
+
+      // 曇り
+      cloud: `<svg viewBox="0 0 24 24">
+        <path d="M17.5 19H7a5 5 0 0 1-.5-9.97A6.5 6.5 0 0 1 19 11.5a4.5 4.5 0 0 1-1.5 7.5z"/>
+      </svg>`,
+
+      // 雨
+      rain: `<svg viewBox="0 0 24 24">
+        <path d="M16.5 15.5H7.2a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.5 9a3.8 3.8 0 0 1-1 6.5z"/>
+        <line x1="8.5" y1="17.5" x2="7" y2="21.5"/>
+        <line x1="12.5" y1="17.5" x2="11" y2="21.5"/>
+        <line x1="16.5" y1="17.5" x2="15" y2="21.5"/>
+      </svg>`,
+
+      // 雪
+      snow: `<svg viewBox="0 0 24 24">
+        <path d="M16.5 14H7.2a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.5 8a3.8 3.8 0 0 1-1 6z"/>
+        <path d="M8 17.5v4M6.5 19.5h3M14 17.5v4M12.5 19.5h3"/>
+      </svg>`,
+
+      // 雷雨
+      thunder: `<svg viewBox="0 0 24 24">
+        <path d="M16.5 14.5H7.2a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.5 8.5a3.8 3.8 0 0 1-1 6z"/>
+        <polygon points="12.5 13.5 9.5 18 12.5 18 11.5 22.5 15.5 17 12.5 17 13.5 13.5"/>
+      </svg>`
     };
 
     function resolveWeatherDisplay(code) {
@@ -1495,7 +1534,7 @@
       }
     }, { passive: true });
 
-    // --- 6. 週間カレンダー描画ロジック ---
+    // --- 6. 週間カレンダー描画ロジック (祝日名の自然な短縮処理) ---
     function renderWeekCalendar() {
       const container = document.getElementById('week-grid-container');
       container.innerHTML = '';
@@ -1517,7 +1556,8 @@
 
         if (holiday) {
           dayClass += ' holiday';
-          dayLabel = holiday.length > 3 ? holiday.slice(0, 3) : holiday;
+          // 末尾の「の日」を「日」にするか、自然に収まる形に整形
+          dayLabel = holiday.replace(/の日$/, '日');
         } else if (dayIdx === 6) {
           dayClass += ' sat';
         } else if (dayIdx === 0) {
