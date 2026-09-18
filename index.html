@@ -29,6 +29,11 @@
       --wn-rain: #1e88e5;
       --wn-snow: #29b6f6;
       --wn-thunder: #ffa000;
+
+      /* チェッカー用カラー */
+      --check-done-bg: #e6f4ea;
+      --check-done-text: #137333;
+      --check-done-border: #ceead6;
     }
 
     [data-theme="dark"] {
@@ -51,6 +56,11 @@
       --wn-rain: #42a5f5;
       --wn-snow: #4fc3f7;
       --wn-thunder: #ffb300;
+
+      /* ダークモード用チェッカー */
+      --check-done-bg: #0d2818;
+      --check-done-text: #81c995;
+      --check-done-border: #1e4620;
     }
 
     * {
@@ -296,7 +306,7 @@
       margin-left: 1px;
     }
 
-    /* --- 下段: スワイプ切替モジュール --- */
+    /* --- 下段: スワイプ切替モジュール (3面構成) --- */
     .switchable-card {
       grid-column: span 2;
       position: relative;
@@ -322,7 +332,7 @@
       height: 8px;
       border-radius: 50%;
       background: var(--border-color);
-      transition: background 0.3s;
+      transition: background 0.3s, width 0.3s;
     }
 
     .dot.active {
@@ -344,20 +354,20 @@
 
     .view-slider {
       display: flex;
-      width: 200%;
+      width: 300%;
       height: 100%;
       transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .slider-pane {
-      width: 50%;
+      width: 33.3333%;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       height: 100%;
     }
 
-    /* 電車ビュー */
+    /* ペイン1: 電車ビュー */
     .train-stage {
       display: flex;
       align-items: center;
@@ -403,7 +413,7 @@
       margin-top: 4px;
     }
 
-    /* --- 週間カレンダービュー --- */
+    /* ペイン2: 週間カレンダービュー */
     .week-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -502,6 +512,85 @@
       white-space: nowrap;
       text-overflow: ellipsis;
       display: inline-block;
+    }
+
+    /* ペイン3: Todoチェッカービュー */
+    .checker-container {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      grid-gap: 10px;
+      flex: 1;
+      align-items: stretch;
+      margin-top: 4px;
+    }
+
+    .checker-item {
+      background: var(--bg-color);
+      border: 2px solid var(--border-color);
+      border-radius: 14px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+      text-align: center;
+    }
+
+    .checker-item:active {
+      transform: scale(0.97);
+    }
+
+    .checker-item.done {
+      background: var(--check-done-bg);
+      border-color: var(--check-done-border);
+    }
+
+    .checker-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      font-size: 1.1rem;
+      color: var(--text-sub);
+      transition: all 0.2s;
+    }
+
+    .checker-item.done .checker-icon {
+      background: var(--check-done-text);
+      border-color: var(--check-done-text);
+      color: #ffffff;
+    }
+
+    .checker-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      word-break: break-all;
+      margin: 4px 0;
+      line-height: 1.2;
+    }
+
+    .checker-item.done .checker-title {
+      text-decoration: line-through;
+      color: var(--check-done-text);
+    }
+
+    .checker-time {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      font-feature-settings: "tnum";
+      height: 16px;
+    }
+
+    .checker-item.done .checker-time {
+      color: var(--check-done-text);
     }
 
     #wake-toast {
@@ -610,6 +699,11 @@
       display: flex;
       gap: 8px;
       align-items: center;
+    }
+
+    .checker-edit-grid {
+      display: grid;
+      grid-gap: 6px;
     }
 
     .collapsible-section {
@@ -755,7 +849,7 @@
       </div>
     </div>
 
-    <!-- 下段: スワイプ切替モジュール -->
+    <!-- 下段: スワイプ切替モジュール (3面化) -->
     <div class="card switchable-card" id="bottom-card">
       <div class="card-header-bar">
         <span id="bottom-header-title" class="location-text">吉祥寺駅 - 中央線快速 東京方面</span>
@@ -764,6 +858,7 @@
           <div class="indicator-dots">
             <span class="dot active" id="dot-0"></span>
             <span class="dot" id="dot-1"></span>
+            <span class="dot" id="dot-2"></span>
           </div>
           <button class="nav-arrow-btn" onclick="nextBottomView()">▶</button>
         </div>
@@ -792,6 +887,11 @@
         <!-- ペイン2: 週間カレンダー -->
         <div class="slider-pane">
           <div class="week-grid" id="week-grid-container"></div>
+        </div>
+
+        <!-- ペイン3: Todoチェッカー -->
+        <div class="slider-pane">
+          <div class="checker-container" id="checker-grid-container"></div>
         </div>
       </div>
     </div>
@@ -867,6 +967,18 @@
             <option value="0.20">20%</option>
             <option value="0.10">10%</option>
           </select>
+        </div>
+      </div>
+
+      <!-- Todoチェッカー設定項目 (5項目) -->
+      <div class="form-item">
+        <label>📝 デイリーTodoチェッカー (5つのタスク)</label>
+        <div class="checker-edit-grid">
+          <input type="text" id="input-task-0" placeholder="タスク1 (例: 財布・定期)">
+          <input type="text" id="input-task-1" placeholder="タスク2 (例: 鍵・社員証)">
+          <input type="text" id="input-task-2" placeholder="タスク3 (例: スマホ・充電器)">
+          <input type="text" id="input-task-3" placeholder="タスク4 (例: ハンカチ・ティッシュ)">
+          <input type="text" id="input-task-4" placeholder="タスク5 (例: 折りたたみ傘)">
         </div>
       </div>
 
@@ -976,15 +1088,14 @@
             </ul>
           </li>
           <li><strong>深夜のタッチ一時復帰:</strong> 深夜モード中に画面のカード余白をタップすると、30秒間だけ最高輝度（100%）に一時復帰します。</li>
-          <li><strong>モードのOFF機能:</strong> 各モードを無効に設定すると、その時間帯は減光を行わず高輝度（100%）で動作します。</li>
         </ul>
       </div>
 
       <div class="help-section">
-        <h4>3. 電車発車案内と週間カレンダー（下段）</h4>
+        <h4>3. 下段スワイプモジュール（3画面）</h4>
         <ul>
-          <li><strong>左右スワイプ切替:</strong> 下段モジュールを左右にスワイプ（または右上の矢印ボタン）することで、「電車カウントダウン」と「週間カレンダー」を切り替えます。選択状態は自動保存されます。</li>
-          <li><strong>凡そモード / 詳細モード:</strong> フッター左の「表示」ボタンで切り替え可能。「凡そ」は1分単位（約○分後）で更新されるため、毎秒の描画による視界のチラつきを完全に排除できます。</li>
+          <li><strong>左右スワイプ切替:</strong> 下段モジュールを左右にスワイプ（または右上の矢印ボタン）することで、「電車案内」「週間カレンダー」「Todoチェッカー」の3画面を切り替えます。選択状態は自動保存されます。</li>
+          <li><strong>デイリーTodoチェッカー:</strong> 画面をタップするとチェックが入り、完了時刻が記録されます。深夜0時を過ぎると自動的にリセットされ、毎朝新しい状態で使用できます。タスク名は設定から編集可能です。</li>
           <li><strong>祝日連動:</strong> 春分・秋分や振替休日を含め自動計算されます。祝日はカレンダーが赤字になり、電車も自動で「土休日ダイヤ」が適用されます。</li>
         </ul>
       </div>
@@ -995,21 +1106,12 @@
         <ul>
           <li><strong>毎週指定:</strong> <code>曜日:ごみ名</code>（例: <code>火:燃やすごみ</code>）</li>
           <li><strong>第N週指定:</strong> <code>第N曜日:ごみ名</code>（例: <code>第2木:ビン・缶</code>、<code>第4水:プラ</code>）</li>
-          <li>※今日・明日のバッジ表示に加え、週間カレンダーの各曜日の枠内にも自動配置されます。</li>
         </ul>
       </div>
 
       <div class="help-section">
-        <h4>5. 天気予報・傘アラート・地点指定</h4>
-        <ul>
-          <li><strong>地点選択:</strong> GPSが搭載されていないWi-Fi版iPadや屋内設置時は、「手動選択」から都道府県・都市を指定してください。</li>
-          <li><strong>傘アラート:</strong> 当日の最大降水確率が40%以上になると、天気モジュール右上に「☂️ 傘が必要」バッジが自動点灯します。</li>
-        </ul>
-      </div>
-
-      <div class="help-section">
-        <h4>6. 設定データのバックアップと移行</h4>
-        <p>設定画面の「データのバックアップ / 移行」から、全設定（時刻表、地点、時間帯、ごみ収集ルール）をJSONファイルとして保存、またはクリップボードにコピーできます。PCで作成した設定をiPadへそのまま貼り付けて復元可能です。</p>
+        <h4>5. 設定データのバックアップと移行</h4>
+        <p>設定画面の「データのバックアップ / 移行」から、全設定（時刻表、地点、時間帯、Todo項目、ごみ収集ルール）をJSONファイルとして保存、またはクリップボードにコピーできます。</p>
       </div>
 
       <div class="modal-footer">
@@ -1100,7 +1202,7 @@
     let wakeInterval = null;
 
     function handleScreenTap(event) {
-      if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls')) return;
+      if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls') || event.target.closest('.checker-item')) return;
       const currentMode = getCurrentTimeMode();
       const cfg = getTimeSettings();
       if (currentMode === 'night' && cfg.nightEnabled && !isTemporaryWake) {
@@ -1274,6 +1376,7 @@
       document.getElementById('clock-time').textContent = `${h}:${m}`;
 
       updateTrashReminders(now);
+      checkAndResetDailyTasks(now);
       applyThemeAndBrightness();
     }
 
@@ -1497,33 +1600,118 @@
       }
     }
 
-    // --- 5. 下段モジュール切り替え & スワイプ制御 ---
+    // --- 5. Todoチェッカー管理ロジック ---
+    const DEFAULT_TASKS = ["財布・定期", "鍵・社員証", "スマホ・充電器", "ハンカチ", "折りたたみ傘"];
+
+    function getTaskNames() {
+      const saved = localStorage.getItem('hub_task_names');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+      }
+      return DEFAULT_TASKS;
+    }
+
+    function getTaskProgress() {
+      const saved = localStorage.getItem('hub_task_progress');
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+      }
+      return { date: "", completed: [false, false, false, false, false], times: ["", "", "", "", ""] };
+    }
+
+    function checkAndResetDailyTasks(nowDate) {
+      const y = nowDate.getFullYear();
+      const m = String(nowDate.getMonth() + 1).padStart(2, '0');
+      const d = String(nowDate.getDate()).padStart(2, '0');
+      const todayStr = `${y}-${m}-${d}`;
+
+      const progress = getTaskProgress();
+      if (progress.date !== todayStr) {
+        const fresh = {
+          date: todayStr,
+          completed: [false, false, false, false, false],
+          times: ["", "", "", "", ""]
+        };
+        localStorage.setItem('hub_task_progress', JSON.stringify(fresh));
+        renderChecker();
+      }
+    }
+
+    function toggleTaskComplete(index) {
+      const progress = getTaskProgress();
+      const isDone = !progress.completed[index];
+      progress.completed[index] = isDone;
+
+      if (isDone) {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        progress.times[index] = `${h}:${m}`;
+      } else {
+        progress.times[index] = "";
+      }
+
+      localStorage.setItem('hub_task_progress', JSON.stringify(progress));
+      renderChecker();
+    }
+
+    function renderChecker() {
+      const container = document.getElementById('checker-grid-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const names = getTaskNames();
+      const progress = getTaskProgress();
+
+      for (let i = 0; i < 5; i++) {
+        const isDone = !!progress.completed[i];
+        const timeStr = progress.times[i] ? `${progress.times[i]} 済` : "未完了";
+        const taskName = names[i] || `タスク ${i + 1}`;
+
+        const item = document.createElement('div');
+        item.className = 'checker-item' + (isDone ? ' done' : '');
+        item.onclick = () => toggleTaskComplete(i);
+
+        item.innerHTML = `
+          <div class="checker-icon">${isDone ? '✓' : ''}</div>
+          <div class="checker-title">${taskName}</div>
+          <div class="checker-time">${timeStr}</div>
+        `;
+        container.appendChild(item);
+      }
+    }
+
+    // --- 6. 下段モジュール切り替え & スワイプ制御 (3面) ---
     let currentBottomView = parseInt(localStorage.getItem('hub_bottom_view') || "0", 10);
+    const TOTAL_BOTTOM_VIEWS = 3;
 
     function updateBottomViewUI() {
       const slider = document.getElementById('bottom-slider');
-      slider.style.transform = `translateX(-${currentBottomView * 50}%)`;
+      slider.style.transform = `translateX(-${currentBottomView * 33.3333}%)`;
 
       document.getElementById('dot-0').className = 'dot' + (currentBottomView === 0 ? ' active' : '');
       document.getElementById('dot-1').className = 'dot' + (currentBottomView === 1 ? ' active' : '');
+      document.getElementById('dot-2').className = 'dot' + (currentBottomView === 2 ? ' active' : '');
 
       const titleEl = document.getElementById('bottom-header-title');
       if (currentBottomView === 0) {
         const config = loadTrainConfig();
         titleEl.textContent = `${config.station} - ${config.direction}`;
-      } else {
+      } else if (currentBottomView === 1) {
         titleEl.textContent = "週間カレンダー & 天気予報 (7日間)";
+      } else {
+        titleEl.textContent = "Todoチェッカー (毎日0時リセット)";
       }
       localStorage.setItem('hub_bottom_view', currentBottomView);
     }
 
     function prevBottomView() {
-      currentBottomView = (currentBottomView === 0) ? 1 : 0;
+      currentBottomView = (currentBottomView - 1 + TOTAL_BOTTOM_VIEWS) % TOTAL_BOTTOM_VIEWS;
       updateBottomViewUI();
     }
 
     function nextBottomView() {
-      currentBottomView = (currentBottomView === 1) ? 0 : 1;
+      currentBottomView = (currentBottomView + 1) % TOTAL_BOTTOM_VIEWS;
       updateBottomViewUI();
     }
 
@@ -1541,15 +1729,14 @@
       const diffY = e.changedTouches[0].screenY - touchStartY;
       if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY)) {
         if (diffX < 0) {
-          currentBottomView = 1;
+          nextBottomView();
         } else {
-          currentBottomView = 0;
+          prevBottomView();
         }
-        updateBottomViewUI();
       }
     }, { passive: true });
 
-    // --- 6. 週間カレンダー描画ロジック ---
+    // --- 7. 週間カレンダー描画ロジック ---
     function renderWeekCalendar() {
       const container = document.getElementById('week-grid-container');
       container.innerHTML = '';
@@ -1606,7 +1793,7 @@
       }
     }
 
-    // --- 7. 電車発車案内ロジック ---
+    // --- 8. 電車発車案内ロジック ---
     const DEFAULT_TRAIN_DATA = {
       station: "吉祥寺駅",
       direction: "中央線快速 東京方面",
@@ -1752,7 +1939,7 @@
       trainTimer = setInterval(updateTrainCountdown, intervalMs);
     }
 
-    // --- 8. モーダル・設定・バックアップ ---
+    // --- 9. モーダル・設定・バックアップ ---
     function initLocationSelectors() {
       const prefSelect = document.getElementById('select-pref');
       prefSelect.innerHTML = '';
@@ -1815,6 +2002,12 @@
       document.getElementById('input-night-start').value = timeCfg.nightStart;
       document.getElementById('input-night-bright').value = timeCfg.nightBright;
 
+      // 5タスク設定の入力反映
+      const taskNames = getTaskNames();
+      for (let i = 0; i < 5; i++) {
+        document.getElementById(`input-task-${i}`).value = taskNames[i] || '';
+      }
+
       document.getElementById('select-train-display-mode').value = getTrainDisplayMode();
 
       const config = loadTrainConfig();
@@ -1839,6 +2032,17 @@
     function closeHelpModal() {
       document.getElementById('help-modal').style.display = 'none';
     }
+
+    // モーダル背景（外側）クリックで閉じるイベントリスナー
+    window.addEventListener('click', (event) => {
+      const trainModal = document.getElementById('train-modal');
+      const helpModal = document.getElementById('help-modal');
+      if (event.target === trainModal) {
+        closeTrainModal();
+      } else if (event.target === helpModal) {
+        closeHelpModal();
+      }
+    });
 
     function toggleAccordion(id) {
       document.getElementById(id).classList.toggle('open');
@@ -1869,6 +2073,14 @@
         nightBright: document.getElementById('input-night-bright').value || "0.20"
       };
       localStorage.setItem('hub_time_settings', JSON.stringify(timeSettings));
+
+      // 5タスク名の保存
+      const updatedTasks = [];
+      for (let i = 0; i < 5; i++) {
+        const val = document.getElementById(`input-task-${i}`).value.trim();
+        updatedTasks.push(val || `タスク ${i + 1}`);
+      }
+      localStorage.setItem('hub_task_names', JSON.stringify(updatedTasks));
 
       const mode = document.getElementById('select-location-mode').value;
       const pref = document.getElementById('select-pref').value;
@@ -1901,6 +2113,8 @@
       updateTrainCountdown();
       updateTimeAndTheme();
       renderWeekCalendar();
+      renderChecker();
+      updateBottomViewUI();
     }
 
     function exportSettingsFile() {
@@ -1910,6 +2124,8 @@
         displayMode: getTrainDisplayMode(),
         trashRules: localStorage.getItem('hub_trash_rules') || DEFAULT_TRASH_RULES,
         timeSettings: getTimeSettings(),
+        taskNames: getTaskNames(),
+        taskProgress: getTaskProgress(),
         bottomView: currentBottomView
       };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
@@ -1928,6 +2144,8 @@
         displayMode: getTrainDisplayMode(),
         trashRules: localStorage.getItem('hub_trash_rules') || DEFAULT_TRASH_RULES,
         timeSettings: getTimeSettings(),
+        taskNames: getTaskNames(),
+        taskProgress: getTaskProgress(),
         bottomView: currentBottomView
       };
       const jsonStr = JSON.stringify(exportData, null, 2);
@@ -1954,6 +2172,8 @@
         if (parsed.displayMode) localStorage.setItem('train_display_mode', parsed.displayMode);
         if (parsed.trashRules) localStorage.setItem('hub_trash_rules', parsed.trashRules);
         if (parsed.timeSettings) localStorage.setItem('hub_time_settings', JSON.stringify(parsed.timeSettings));
+        if (parsed.taskNames) localStorage.setItem('hub_task_names', JSON.stringify(parsed.taskNames));
+        if (parsed.taskProgress) localStorage.setItem('hub_task_progress', JSON.stringify(parsed.taskProgress));
         if (parsed.bottomView !== undefined) {
           currentBottomView = parsed.bottomView;
           localStorage.setItem('hub_bottom_view', currentBottomView);
@@ -1967,6 +2187,7 @@
         updateTrainCountdown();
         updateTimeAndTheme();
         renderWeekCalendar();
+        renderChecker();
         alert('インポートが完了しました。');
       } catch(e) {
         alert(`インポート失敗: ${e.message}`);
@@ -1985,6 +2206,7 @@
 
     // --- 初期ロードと定期実行タイマー ---
     syncDisplayModeUI();
+    renderChecker();
     updateBottomViewUI();
     updateTimeAndTheme();
     updateTrainCountdown();
