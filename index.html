@@ -325,7 +325,7 @@
       margin-left: 1px;
     }
 
-    /* 24時間天気タイムライン（3時間刻み・8列均等グリッド・スクロールなし） */
+    /* 24時間天気タイムライン（今日0時〜21時の固定8コマ・均等グリッド） */
     .hourly-timeline {
       display: grid;
       grid-template-columns: repeat(8, 1fr);
@@ -347,7 +347,7 @@
       transition: all 0.2s ease;
     }
 
-    /* 直近・次のコマを青枠で強調 */
+    /* 現在時間帯のハイライト枠 */
     .hourly-col.is-current {
       border: 2px solid var(--highlight-border);
       background: var(--highlight-bg);
@@ -1149,16 +1149,16 @@
     </div>
   </div>
 
-  <!-- 2. 24時間天気詳細モーダル（3時間ごと・8コマ・直近青枠ハイライト） -->
+  <!-- 2. 今日1日の天気推移モーダル（00:00〜21:00固定8コマ・直近ハイライト） -->
   <div id="hourly-weather-modal" class="modal">
     <div class="modal-box" style="max-width: 680px;">
       <div class="modal-header">
-        <h3>24時間天気推移（3時間ごと・JMA気象庁モデル）</h3>
+        <h3>今日1日の天気推移（3時間ごと・JMA気象庁モデル）</h3>
         <span id="modal-location-sub" style="font-size: 0.8rem; color: var(--text-sub);">地点名</span>
       </div>
 
       <div id="hourly-timeline-container" class="hourly-timeline">
-        <!-- JSで8コマを均等グリッド挿入 -->
+        <!-- JSで00:00〜21:00の8コマを固定挿入 -->
       </div>
 
       <div class="modal-footer" style="justify-content: space-between; align-items: center;">
@@ -1190,7 +1190,7 @@
 
       <div class="help-section">
         <h4>2. 気象庁気象モデル (JMA Seamless) 連携</h4>
-        <p>Open-Meteoが提供する気象庁の高解像度局地数値予報モデル（JMA Seamless）を直接呼び出しています。CORS制限なく、日本国内の実感に即した高精度な予報を取得できます。天気カードの「詳しく ↗」ボタンから3時間ごとの推移（直近は青枠ハイライト）もスクロールなしで確認可能です。</p>
+        <p>Open-Meteoが提供する気象庁の高解像度局地数値予報モデル（JMA Seamless）を直接呼び出しています。CORS制限なく、日本国内の実感に即した高精度な予報を取得できます。天気カードの「詳しく ↗」ボタンから今日1日（0時〜21時）の推移を固定位置で確認可能です。</p>
       </div>
 
       <div class="help-section">
@@ -1652,7 +1652,6 @@
 
     async function fetchJMAWeather(lat, lon, label) {
       try {
-        // forecast_days=8 を指定し、明日からの7日間（今日を含めて8日分）のデータを完全取得
         const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&models=jma_seamless&forecast_days=8&timezone=auto`;
         const res = await fetch(url);
         const data = await res.json();
@@ -1692,7 +1691,7 @@
       }
     }
 
-    // --- 24時間天気モーダル描画ロジック（ローカル時刻整合・直近コマ修正） ---
+    // --- 24時間天気モーダル描画ロジック（今日0時〜21時固定8コマ・現在帯ハイライト） ---
     function openHourlyWeatherModal() {
       const loc = getLocationSettings();
       document.getElementById('modal-location-sub').textContent = document.getElementById('location-name').textContent;
@@ -1722,49 +1721,59 @@
         return;
       }
 
-      // 日本のローカル時刻で現在の "YYYY-MM-DDTHH" 文字列を生成
+      // 今日の日付文字列（YYYY-MM-DD）
       const now = new Date();
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, '0');
       const d = String(now.getDate()).padStart(2, '0');
-      const h = String(now.getHours()).padStart(2, '0');
-      const localPrefix = `${y}-${m}-${d}T${h}`;
+      const todayDateStr = `${y}-${m}-${d}`;
+      const currentHour = now.getHours();
 
-      // 現在時刻または次の正時のインデックスを特定
-      let startIndex = globalHourlyWeatherData.time.findIndex(t => t.startsWith(localPrefix));
-      if (startIndex === -1) {
-        // 見つからない場合は未来の直近時刻を探す
-        const nowMs = now.getTime();
-        startIndex = globalHourlyWeatherData.time.findIndex(t => new Date(t).getTime() >= nowMs);
+      // 固定表示する8つの目標時刻（00:00 〜 21:00）
+      const targetHours = [0, 3, 6, 9, 12, 15, 18, 21];
+
+      // 現在時刻がどのコマに最も近いか（または次の直近か）を判定
+      // 0〜2時: 0時, 3〜5時: 3時 ... 21時以降: 21時
+      let currentTargetHour = 21;
+      for (let i = 0; i < targetHours.length; i++) {
+        if (currentHour < targetHours[i] + 3) {
+          currentTargetHour = targetHours[i];
+          break;
+        }
       }
-      if (startIndex === -1) startIndex = 0;
 
-      // 現在時刻から3時間おきに8コマ（24時間分）を抽出
-      for (let i = 0; i < 8; i++) {
-        const idx = startIndex + (i * 3);
-        if (idx >= globalHourlyWeatherData.time.length) break;
+      targetHours.forEach(hVal => {
+        const hourStr = String(hVal).padStart(2, '0');
+        const targetIsoPrefix = `${todayDateStr}T${hourStr}:00`;
 
-        const timeStr = globalHourlyWeatherData.time[idx]; // "2026-09-21T18:00"
-        const hour = timeStr.split('T')[1].slice(0, 5); // "18:00"
-        
-        const temp = Math.round(globalHourlyWeatherData.temperature_2m[idx]);
-        const wCode = globalHourlyWeatherData.weather_code[idx];
-        const pop = globalHourlyWeatherData.precipitation_probability[idx] ?? 0;
-        const precip = globalHourlyWeatherData.precipitation[idx] ?? 0;
+        const idx = globalHourlyWeatherData.time.findIndex(t => t.startsWith(targetIsoPrefix));
+
+        let temp = '--';
+        let wCode = 1;
+        let pop = 0;
+        let precip = 0;
+
+        if (idx !== -1) {
+          temp = Math.round(globalHourlyWeatherData.temperature_2m[idx]);
+          wCode = globalHourlyWeatherData.weather_code[idx];
+          pop = globalHourlyWeatherData.precipitation_probability[idx] ?? 0;
+          precip = globalHourlyWeatherData.precipitation[idx] ?? 0;
+        }
+
         const info = resolveWeatherDisplay(wCode);
+        const isCurrent = (hVal === currentTargetHour);
 
         const col = document.createElement('div');
-        // 直近のコマ（1つ目）を青枠ハイライト
-        col.className = 'hourly-col' + (i === 0 ? ' is-current' : '');
+        col.className = 'hourly-col' + (isCurrent ? ' is-current' : '');
         col.innerHTML = `
-          <div class="hourly-time">${hour}</div>
+          <div class="hourly-time">${hourStr}:00</div>
           <div class="hourly-icon">${info.icon}</div>
           <div class="hourly-temp">${temp}°</div>
           <div class="hourly-pop">${pop}%</div>
           <div class="hourly-precip">${precip > 0 ? `${precip}mm` : '-'}</div>
         `;
         container.appendChild(col);
-      }
+      });
     }
 
     // --- 5. Todoチェッカー管理ロジック ---
