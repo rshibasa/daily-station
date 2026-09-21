@@ -1652,7 +1652,8 @@
 
     async function fetchJMAWeather(lat, lon, label) {
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&models=jma_seamless&timezone=auto`;
+        // forecast_days=8 を指定し、明日からの7日間（今日を含めて8日分）のデータを完全取得
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&models=jma_seamless&forecast_days=8&timezone=auto`;
         const res = await fetch(url);
         const data = await res.json();
 
@@ -1691,7 +1692,7 @@
       }
     }
 
-    // --- 24時間天気モーダル描画ロジック（3時間ごと・8コマ・直近ハイライト） ---
+    // --- 24時間天気モーダル描画ロジック（ローカル時刻整合・直近コマ修正） ---
     function openHourlyWeatherModal() {
       const loc = getLocationSettings();
       document.getElementById('modal-location-sub').textContent = document.getElementById('location-name').textContent;
@@ -1721,19 +1722,30 @@
         return;
       }
 
+      // 日本のローカル時刻で現在の "YYYY-MM-DDTHH" 文字列を生成
       const now = new Date();
-      const currentIsoHour = now.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const h = String(now.getHours()).padStart(2, '0');
+      const localPrefix = `${y}-${m}-${d}T${h}`;
 
-      let startIndex = globalHourlyWeatherData.time.findIndex(t => t.startsWith(currentIsoHour));
+      // 現在時刻または次の正時のインデックスを特定
+      let startIndex = globalHourlyWeatherData.time.findIndex(t => t.startsWith(localPrefix));
+      if (startIndex === -1) {
+        // 見つからない場合は未来の直近時刻を探す
+        const nowMs = now.getTime();
+        startIndex = globalHourlyWeatherData.time.findIndex(t => new Date(t).getTime() >= nowMs);
+      }
       if (startIndex === -1) startIndex = 0;
 
-      // 3時間おきに8コマ（24時間分）を抽出
+      // 現在時刻から3時間おきに8コマ（24時間分）を抽出
       for (let i = 0; i < 8; i++) {
         const idx = startIndex + (i * 3);
         if (idx >= globalHourlyWeatherData.time.length) break;
 
-        const timeStr = globalHourlyWeatherData.time[idx]; // "2026-09-21T15:00"
-        const hour = timeStr.split('T')[1].slice(0, 5); // "15:00"
+        const timeStr = globalHourlyWeatherData.time[idx]; // "2026-09-21T18:00"
+        const hour = timeStr.split('T')[1].slice(0, 5); // "18:00"
         
         const temp = Math.round(globalHourlyWeatherData.temperature_2m[idx]);
         const wCode = globalHourlyWeatherData.weather_code[idx];
@@ -1742,7 +1754,7 @@
         const info = resolveWeatherDisplay(wCode);
 
         const col = document.createElement('div');
-        // 最初のコマ（直近の予報）にハイライトクラスを付与
+        // 直近のコマ（1つ目）を青枠ハイライト
         col.className = 'hourly-col' + (i === 0 ? ' is-current' : '');
         col.innerHTML = `
           <div class="hourly-time">${hour}</div>
@@ -1899,7 +1911,7 @@
       const today = new Date();
       const days = ['日', '月', '火', '水', '木', '金', '土'];
 
-      // i = 1 から開始し、明日〜7日後の計7日間を描画
+      // i = 1 から開始し、明日〜7日後（計7日間）を描画
       for (let i = 1; i <= 7; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
@@ -1924,7 +1936,7 @@
         let weatherIconHtml = '';
         let weatherDescText = '--';
         let tempHtml = '--°/--°';
-        if (globalDailyWeatherData && globalDailyWeatherData.time && globalDailyWeatherData.time[i]) {
+        if (globalDailyWeatherData && globalDailyWeatherData.time && globalDailyWeatherData.time[i] !== undefined) {
           const wCode = globalDailyWeatherData.weather_code[i];
           const maxT = Math.round(globalDailyWeatherData.temperature_2m_max[i]);
           const minT = Math.round(globalDailyWeatherData.temperature_2m_min[i]);
