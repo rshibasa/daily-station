@@ -689,7 +689,7 @@
       right: 16px;
       background: rgba(0, 0, 0, 0.85);
       color: #ffffff;
-      padding: 6px 12px;
+      padding: 6px 14px;
       border-radius: 20px;
       font-size: 0.8rem;
       font-weight: 600;
@@ -883,7 +883,7 @@
 <body onclick="handleScreenTap(event)">
 
   <div id="brightness-filter"></div>
-  <div id="wake-toast">一時復帰中 (残り <span id="wake-sec">30</span>秒)</div>
+  <div id="wake-toast"><span id="wake-title">一時復帰中</span> (残り <span id="wake-sec">30</span>)</div>
 
   <div class="container" id="hub-container">
     <!-- 上段左: 日付 & 時計 & ごみ出しリマインダー -->
@@ -1028,24 +1028,24 @@
 
       <div class="form-item">
         <div class="mode-header-label">
-          <label style="margin-bottom:0;">☀️ 日中モード</label>
+          <label style="margin-bottom:0;">☀️ 日中モード (タップで5分間+20%ブースト)</label>
           <label class="toggle-checkbox-label">
             <input type="checkbox" id="check-day-enabled"> 有効にする
           </label>
         </div>
         <div class="time-range-group">
-          <span style="font-size:0.8rem; color:var(--text-sub); flex:1;">出勤終了後 〜 深夜前</span>
+          <span style="font-size:0.8rem; color:var(--text-sub); flex:1;">通常時 (出勤後〜深夜)</span>
           <select id="input-day-bright" style="flex:0.8;">
-            <option value="0.85">85%</option>
-            <option value="0.75">75%</option>
+            <option value="0.55">55% (推奨)</option>
             <option value="0.65">65%</option>
+            <option value="0.75">75%</option>
           </select>
         </div>
       </div>
 
       <div class="form-item">
         <div class="mode-header-label">
-          <label style="margin-bottom:0;">🌙 深夜モード (減光・省電力)</label>
+          <label style="margin-bottom:0;">🌙 深夜モード (タップで30秒間70%一時復帰)</label>
           <label class="toggle-checkbox-label">
             <input type="checkbox" id="check-night-enabled"> 有効にする
           </label>
@@ -1055,9 +1055,9 @@
           <span>〜</span>
           <span style="font-size:0.8rem; color:var(--text-sub); flex:1;">出勤開始まで</span>
           <select id="input-night-bright" style="flex:0.8;">
-            <option value="0.30">30%</option>
             <option value="0.20">20%</option>
             <option value="0.10">10%</option>
+            <option value="0.30">30%</option>
           </select>
         </div>
       </div>
@@ -1189,8 +1189,12 @@
       </div>
 
       <div class="help-section">
-        <h4>2. 気象庁気象モデル (JMA Seamless) 連携</h4>
-        <p>Open-Meteoが提供する気象庁の高解像度局地数値予報モデル（JMA Seamless）を直接呼び出しています。CORS制限なく、日本国内の実感に即した高精度な予報を取得できます。天気カードの「詳しく ↗」ボタンから今日1日（0時〜21時）の推移を固定位置で確認可能です。</p>
+        <h4>2. 時間帯別の最適輝度とタップブースト</h4>
+        <p>液晶保護と眩しさ防止を両立する動的輝度制御：</p>
+        <ul>
+          <li><strong>日中モード（通常55%）:</strong> タップすると5分間だけ輝度が+20%（75%）に一時ブーストされます。</li>
+          <li><strong>深夜モード（通常20%）:</strong> タップすると30秒間だけ70%（眩しすぎない明るさ）に一時復帰します。</li>
+        </ul>
       </div>
 
       <div class="help-section">
@@ -1271,7 +1275,7 @@
       commuteEnd: "09:00",
       commuteBright: "1.0",
       dayEnabled: true,
-      dayBright: "0.75",
+      dayBright: "0.55", // 通常時55%
       nightEnabled: true,
       nightStart: "23:00",
       nightBright: "0.20"
@@ -1285,36 +1289,55 @@
       return DEFAULT_TIME_SETTINGS;
     }
 
-    let isTemporaryWake = false;
-    let wakeCountdownSec = 30;
-    let wakeInterval = null;
+    let isTemporaryActive = false; // 深夜復帰または日中ブースト作動中フラグ
+    let activeCountdownSec = 0;
+    let activeTimerInterval = null;
 
     function handleScreenTap(event) {
       if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls') || event.target.closest('.checker-item')) return;
       const currentMode = getCurrentTimeMode();
       const cfg = getTimeSettings();
-      if (currentMode === 'night' && cfg.nightEnabled && !isTemporaryWake) {
-        triggerTemporaryWake();
+
+      if (currentMode === 'night' && cfg.nightEnabled) {
+        // 深夜モード: 30秒間、輝度70%に一時復帰
+        triggerTemporaryBrightness(30, 0.70, "深夜一時復帰");
+      } else if (currentMode === 'day' && cfg.dayEnabled) {
+        // 日中モード: 5分間（300秒）、ベース輝度+20%に一時ブースト
+        const base = parseFloat(cfg.dayBright);
+        const boosted = Math.min(1.0, base + 0.20);
+        triggerTemporaryBrightness(300, boosted, "日中ブースト(+20%)");
       }
     }
 
-    function triggerTemporaryWake() {
-      isTemporaryWake = true;
-      wakeCountdownSec = 30;
+    function triggerTemporaryBrightness(seconds, targetBright, titleText) {
+      isTemporaryActive = true;
+      activeCountdownSec = seconds;
+
       const toast = document.getElementById('wake-toast');
+      const wakeTitle = document.getElementById('wake-title');
       const wakeSec = document.getElementById('wake-sec');
+      wakeTitle.textContent = titleText;
       toast.style.display = 'block';
-      wakeSec.textContent = wakeCountdownSec;
 
-      applyBrightness(1.0);
+      function formatCountdown(sec) {
+        if (sec >= 60) {
+          const m = Math.floor(sec / 60);
+          const s = sec % 60;
+          return `${m}分${String(s).padStart(2, '0')}秒`;
+        }
+        return `${sec}秒`;
+      }
+      wakeSec.textContent = formatCountdown(activeCountdownSec);
 
-      if (wakeInterval) clearInterval(wakeInterval);
-      wakeInterval = setInterval(() => {
-        wakeCountdownSec--;
-        wakeSec.textContent = wakeCountdownSec;
-        if (wakeCountdownSec <= 0) {
-          clearInterval(wakeInterval);
-          isTemporaryWake = false;
+      applyBrightness(targetBright);
+
+      if (activeTimerInterval) clearInterval(activeTimerInterval);
+      activeTimerInterval = setInterval(() => {
+        activeCountdownSec--;
+        wakeSec.textContent = formatCountdown(activeCountdownSec);
+        if (activeCountdownSec <= 0) {
+          clearInterval(activeTimerInterval);
+          isTemporaryActive = false;
           toast.style.display = 'none';
           updateTimeAndTheme();
         }
@@ -1489,7 +1512,7 @@
       if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
       else document.documentElement.removeAttribute('data-theme');
 
-      if (!isTemporaryWake) {
+      if (!isTemporaryActive) {
         let bLevel = 1.0;
         let modeLabel = "日中";
 
@@ -1512,7 +1535,7 @@
         } else {
           if (cfg.dayEnabled) {
             bLevel = parseFloat(cfg.dayBright);
-            modeLabel = "日中";
+            modeLabel = "日中(通常)";
           } else {
             bLevel = 1.0;
             modeLabel = "日中(OFF:高輝度)";
@@ -1733,7 +1756,6 @@
       const targetHours = [0, 3, 6, 9, 12, 15, 18, 21];
 
       // 現在時刻がどのコマに最も近いか（または次の直近か）を判定
-      // 0〜2時: 0時, 3〜5時: 3時 ... 21時以降: 21時
       let currentTargetHour = 21;
       for (let i = 0; i < targetHours.length; i++) {
         if (currentHour < targetHours[i] + 3) {
@@ -1920,7 +1942,6 @@
       const today = new Date();
       const days = ['日', '月', '火', '水', '木', '金', '土'];
 
-      // i = 1 から開始し、明日〜7日後（計7日間）を描画
       for (let i = 1; i <= 7; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
@@ -2173,7 +2194,7 @@
       document.getElementById('input-commute-bright').value = timeCfg.commuteBright;
 
       document.getElementById('check-day-enabled').checked = (timeCfg.dayEnabled !== false);
-      document.getElementById('input-day-bright').value = timeCfg.dayBright;
+      document.getElementById('input-day-bright').value = timeCfg.dayBright || "0.55";
 
       document.getElementById('check-night-enabled').checked = (timeCfg.nightEnabled !== false);
       document.getElementById('input-night-start').value = timeCfg.nightStart;
@@ -2241,7 +2262,7 @@
         commuteEnd: document.getElementById('input-commute-end').value || "09:00",
         commuteBright: document.getElementById('input-commute-bright').value || "1.0",
         dayEnabled: document.getElementById('check-day-enabled').checked,
-        dayBright: document.getElementById('input-day-bright').value || "0.75",
+        dayBright: document.getElementById('input-day-bright').value || "0.55",
         nightEnabled: document.getElementById('check-night-enabled').checked,
         nightStart: document.getElementById('input-night-start').value || "23:00",
         nightBright: document.getElementById('input-night-bright').value || "0.20"
