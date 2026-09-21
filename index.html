@@ -34,6 +34,10 @@
       --check-done-bg: #e6f4ea;
       --check-done-text: #137333;
       --check-done-border: #ceead6;
+
+      /* 直近ハイライト枠用カラー */
+      --highlight-border: #1a73e8;
+      --highlight-bg: #e8f0fe;
     }
 
     [data-theme="dark"] {
@@ -61,6 +65,10 @@
       --check-done-bg: #0d2818;
       --check-done-text: #81c995;
       --check-done-border: #1e4620;
+
+      /* ダークモード用直近ハイライト */
+      --highlight-border: #8ab4f8;
+      --highlight-bg: #1e2a38;
     }
 
     * {
@@ -335,6 +343,14 @@
       align-items: center;
       gap: 4px;
       text-align: center;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    /* 直近・次のコマを青枠で強調 */
+    .hourly-col.is-current {
+      border: 2px solid var(--highlight-border);
+      background: var(--highlight-bg);
     }
 
     .hourly-time {
@@ -343,6 +359,11 @@
       color: var(--text-sub);
       font-feature-settings: "tnum";
       white-space: nowrap;
+    }
+
+    .hourly-col.is-current .hourly-time {
+      color: var(--accent-color);
+      font-weight: 800;
     }
 
     .hourly-icon {
@@ -486,7 +507,7 @@
       margin-top: 4px;
     }
 
-    /* ペイン2: 週間カレンダービュー */
+    /* ペイン2: 週間カレンダービュー (明日からの7日間) */
     .week-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -507,11 +528,6 @@
       justify-items: center;
       text-align: center;
       row-gap: 1px;
-    }
-
-    .week-col.is-today {
-      border: 2px solid var(--today-border);
-      background: var(--card-bg);
     }
 
     .week-col-date {
@@ -960,7 +976,7 @@
           </div>
         </div>
 
-        <!-- ペイン2: 週間カレンダー (気象庁JMAモデル週間予報連動) -->
+        <!-- ペイン2: 週間カレンダー (明日からの7日間) -->
         <div class="slider-pane">
           <div class="week-grid" id="week-grid-container"></div>
         </div>
@@ -1133,7 +1149,7 @@
     </div>
   </div>
 
-  <!-- 2. 24時間天気詳細モーダル（スクロールなし・8コマ構成） -->
+  <!-- 2. 24時間天気詳細モーダル（3時間ごと・8コマ・直近青枠ハイライト） -->
   <div id="hourly-weather-modal" class="modal">
     <div class="modal-box" style="max-width: 680px;">
       <div class="modal-header">
@@ -1174,13 +1190,14 @@
 
       <div class="help-section">
         <h4>2. 気象庁気象モデル (JMA Seamless) 連携</h4>
-        <p>Open-Meteoが提供する気象庁の高解像度局地数値予報モデル（JMA Seamless）を直接呼び出しています。CORS制限なく、日本国内の実感に即した高精度な予報を取得できます。天気カードの「詳しく ↗」ボタンから3時間ごとの推移もスクロールなしで確認可能です。</p>
+        <p>Open-Meteoが提供する気象庁の高解像度局地数値予報モデル（JMA Seamless）を直接呼び出しています。CORS制限なく、日本国内の実感に即した高精度な予報を取得できます。天気カードの「詳しく ↗」ボタンから3時間ごとの推移（直近は青枠ハイライト）もスクロールなしで確認可能です。</p>
       </div>
 
       <div class="help-section">
         <h4>3. 下段スワイプモジュール（3画面）</h4>
         <ul>
           <li><strong>左右スワイプ切替:</strong> 下段モジュールを左右にスワイプ（または右上の矢印ボタン）することで、「電車案内」「週間カレンダー」「Todoチェッカー」の3画面を切り替えます。選択状態は自動保存されます。</li>
+          <li><strong>週間カレンダー:</strong> 今日の重複を避け、明日からの7日間の予報・気温・ごみ収集予定を表示します。</li>
           <li><strong>デイリーTodoチェッカー:</strong> 画面をタップするとチェックが入り、完了時刻が記録されます。深夜0時を過ぎると自動的にリセットされ、毎朝新しい状態で使用できます。タスク名は設定から編集可能です。</li>
         </ul>
       </div>
@@ -1674,7 +1691,7 @@
       }
     }
 
-    // --- 24時間天気モーダル描画ロジック（3時間ごと・8コマ均等配置） ---
+    // --- 24時間天気モーダル描画ロジック（3時間ごと・8コマ・直近ハイライト） ---
     function openHourlyWeatherModal() {
       const loc = getLocationSettings();
       document.getElementById('modal-location-sub').textContent = document.getElementById('location-name').textContent;
@@ -1725,7 +1742,8 @@
         const info = resolveWeatherDisplay(wCode);
 
         const col = document.createElement('div');
-        col.className = 'hourly-col';
+        // 最初のコマ（直近の予報）にハイライトクラスを付与
+        col.className = 'hourly-col' + (i === 0 ? ' is-current' : '');
         col.innerHTML = `
           <div class="hourly-time">${hour}</div>
           <div class="hourly-icon">${info.icon}</div>
@@ -1835,7 +1853,7 @@
         const config = loadTrainConfig();
         titleEl.textContent = `${config.station} - ${config.direction}`;
       } else if (currentBottomView === 1) {
-        titleEl.textContent = "週間カレンダー & 天気予報 (7日間)";
+        titleEl.textContent = "週間カレンダー & 天気予報 (明日から7日間)";
       } else {
         titleEl.textContent = "Todoチェッカー (毎日0時リセット)";
       }
@@ -1873,7 +1891,7 @@
       }
     }, { passive: true });
 
-    // --- 7. 週間カレンダー描画ロジック ---
+    // --- 7. 週間カレンダー描画ロジック (明日からの7日間) ---
     function renderWeekCalendar() {
       const container = document.getElementById('week-grid-container');
       container.innerHTML = '';
@@ -1881,12 +1899,13 @@
       const today = new Date();
       const days = ['日', '月', '火', '水', '木', '金', '土'];
 
-      for (let i = 0; i < 7; i++) {
+      // i = 1 から開始し、明日〜7日後の計7日間を描画
+      for (let i = 1; i <= 7; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
 
         const col = document.createElement('div');
-        col.className = 'week-col' + (i === 0 ? ' is-today' : '');
+        col.className = 'week-col';
 
         const dayIdx = d.getDay();
         const holiday = getJapaneseHolidayName(d);
