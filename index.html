@@ -190,7 +190,7 @@
       color: var(--alert-text);
     }
 
-    /* --- 上段右: 天気カード（ウェザーニュース調・高視認性版） --- */
+    /* --- 上段右: 天気カード（JMA気象庁モデル・高視認性版） --- */
     .weather-card {
       justify-content: space-between;
       align-items: stretch;
@@ -221,11 +221,22 @@
       font-weight: 700;
     }
 
+    .detail-btn {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
     .weather-main-layout {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 24px;
+      gap: 20px;
       margin: 4px 0;
     }
 
@@ -304,6 +315,68 @@
       font-size: 0.85rem;
       font-weight: 700;
       margin-left: 1px;
+    }
+
+    /* 24時間天気タイムライン（3時間刻み・8列均等グリッド・スクロールなし） */
+    .hourly-timeline {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-gap: 6px;
+      padding: 10px 0 14px;
+    }
+
+    .hourly-col {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 2px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+    }
+
+    .hourly-time {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      font-feature-settings: "tnum";
+      white-space: nowrap;
+    }
+
+    .hourly-icon {
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hourly-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .hourly-temp {
+      font-size: 0.9rem;
+      font-weight: 800;
+      font-feature-settings: "tnum";
+      color: var(--text-main);
+    }
+
+    .hourly-pop {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      font-feature-settings: "tnum";
+    }
+
+    .hourly-precip {
+      font-size: 0.65rem;
+      color: var(--text-sub);
+      font-feature-settings: "tnum";
+      white-space: nowrap;
     }
 
     /* --- 下段: スワイプ切替モジュール (3面構成) --- */
@@ -813,12 +886,15 @@
       </div>
     </div>
 
-    <!-- 上段右: 天気カード（ウェザーニュース調・高視認性版） -->
+    <!-- 上段右: 天気カード（気象庁JMAモデル・高視認性版） -->
     <div class="card weather-card">
       <div class="card-header-bar">
         <span id="location-name" class="location-text">位置特定中...</span>
         <span id="umbrella-badge" class="umbrella-alert">☂️ 傘が必要</span>
-        <span id="weather-updated">--:-- 更新</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="weather-updated">--:-- 更新</span>
+          <button onclick="openHourlyWeatherModal()" class="detail-btn">詳しく ↗</button>
+        </div>
       </div>
       <div class="weather-main-layout">
         <div class="weather-icon-wrap" id="weather-icon-container">
@@ -884,7 +960,7 @@
           </div>
         </div>
 
-        <!-- ペイン2: 週間カレンダー -->
+        <!-- ペイン2: 週間カレンダー (気象庁JMAモデル週間予報連動) -->
         <div class="slider-pane">
           <div class="week-grid" id="week-grid-container"></div>
         </div>
@@ -983,9 +1059,9 @@
       </div>
 
       <div class="form-item">
-        <label>天気予報の取得地点</label>
+        <label>天気予報の取得地点 (Open-Meteo 気象庁モデル連携)</label>
         <select id="select-location-mode" onchange="onLocationModeChange()">
-          <option value="manual">手動選択（都道府県・都市を指定）</option>
+          <option value="manual">手動選択（都道府県・主要都市を指定）</option>
           <option value="auto">GPS自動取得（ブラウザの位置情報）</option>
         </select>
       </div>
@@ -1057,7 +1133,28 @@
     </div>
   </div>
 
-  <!-- 2. 使い方・ヘルプモーダル -->
+  <!-- 2. 24時間天気詳細モーダル（スクロールなし・8コマ構成） -->
+  <div id="hourly-weather-modal" class="modal">
+    <div class="modal-box" style="max-width: 680px;">
+      <div class="modal-header">
+        <h3>24時間天気推移（3時間ごと・JMA気象庁モデル）</h3>
+        <span id="modal-location-sub" style="font-size: 0.8rem; color: var(--text-sub);">地点名</span>
+      </div>
+
+      <div id="hourly-timeline-container" class="hourly-timeline">
+        <!-- JSで8コマを均等グリッド挿入 -->
+      </div>
+
+      <div class="modal-footer" style="justify-content: space-between; align-items: center;">
+        <a id="yahoo-weather-link" href="https://weather.yahoo.co.jp/weather/" target="_blank" rel="noopener noreferrer" style="font-size: 0.8rem; color: var(--accent-color); text-decoration: none; font-weight: 600;">
+          Yahoo!天気（雨雲レーダー）を開く ↗
+        </a>
+        <button onclick="closeHourlyWeatherModal()" style="background: var(--accent-color); color: #fff; border: none;">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 使い方・ヘルプモーダル -->
   <div id="help-modal" class="modal">
     <div class="modal-box">
       <div class="modal-header">
@@ -1076,19 +1173,8 @@
       </div>
 
       <div class="help-section">
-        <h4>2. 焼き付き防止と時間帯・輝度制御</h4>
-        <p>液晶ディスプレイの同一素子劣化・残像焼き付きを防ぐ機能です：</p>
-        <ul>
-          <li><strong>ピクセルシフト:</strong> 10分ごとにメイン画面全体をランダムに -3px〜+3px 微小移動させ、同じ線や文字の素子固定を防ぎます。</li>
-          <li><strong>3つの時間帯モード:</strong>
-            <ul>
-              <li><code>出勤準備</code>: 視認性最優先（輝度100%）。</li>
-              <li><code>日中</code>: 卓上で邪魔にならない通常光量（輝度75%前後）。</li>
-              <li><code>深夜</code>: 就寝時に眩しくない大幅減光（輝度20%前後）＋強制ダークテーマ。</li>
-            </ul>
-          </li>
-          <li><strong>深夜のタッチ一時復帰:</strong> 深夜モード中に画面のカード余白をタップすると、30秒間だけ最高輝度（100%）に一時復帰します。</li>
-        </ul>
+        <h4>2. 気象庁気象モデル (JMA Seamless) 連携</h4>
+        <p>Open-Meteoが提供する気象庁の高解像度局地数値予報モデル（JMA Seamless）を直接呼び出しています。CORS制限なく、日本国内の実感に即した高精度な予報を取得できます。天気カードの「詳しく ↗」ボタンから3時間ごとの推移もスクロールなしで確認可能です。</p>
       </div>
 
       <div class="help-section">
@@ -1096,22 +1182,7 @@
         <ul>
           <li><strong>左右スワイプ切替:</strong> 下段モジュールを左右にスワイプ（または右上の矢印ボタン）することで、「電車案内」「週間カレンダー」「Todoチェッカー」の3画面を切り替えます。選択状態は自動保存されます。</li>
           <li><strong>デイリーTodoチェッカー:</strong> 画面をタップするとチェックが入り、完了時刻が記録されます。深夜0時を過ぎると自動的にリセットされ、毎朝新しい状態で使用できます。タスク名は設定から編集可能です。</li>
-          <li><strong>祝日連動:</strong> 春分・秋分や振替休日を含め自動計算されます。祝日はカレンダーが赤字になり、電車も自動で「土休日ダイヤ」が適用されます。</li>
         </ul>
-      </div>
-
-      <div class="help-section">
-        <h4>4. ごみ収集リマインダーの登録書式</h4>
-        <p>設定画面のテキストエリアに、1行につき1ルールで記述します：</p>
-        <ul>
-          <li><strong>毎週指定:</strong> <code>曜日:ごみ名</code>（例: <code>火:燃やすごみ</code>）</li>
-          <li><strong>第N週指定:</strong> <code>第N曜日:ごみ名</code>（例: <code>第2木:ビン・缶</code>、<code>第4水:プラ</code>）</li>
-        </ul>
-      </div>
-
-      <div class="help-section">
-        <h4>5. 設定データのバックアップと移行</h4>
-        <p>設定画面の「データのバックアップ / 移行」から、全設定（時刻表、地点、時間帯、Todo項目、ごみ収集ルール）をJSONファイルとして保存、またはクリップボードにコピーできます。</p>
       </div>
 
       <div class="modal-footer">
@@ -1281,47 +1352,47 @@
 
     // --- 2. 主要地点マスターデータ ---
     const LOCATION_PRESETS = {
+      "北海道": [
+        { name: "札幌市 中央区", lat: 43.0553, lon: 141.3408, yahoo: "https://weather.yahoo.co.jp/weather/jp/1b/1400.html" },
+        { name: "札幌市 北区", lat: 43.0908, lon: 141.3408, yahoo: "https://weather.yahoo.co.jp/weather/jp/1b/1400.html" },
+        { name: "札幌市 西区", lat: 43.0747, lon: 141.3005, yahoo: "https://weather.yahoo.co.jp/weather/jp/1b/1400.html" },
+        { name: "旭川市", lat: 43.7706, lon: 142.3649, yahoo: "https://weather.yahoo.co.jp/weather/jp/1a/1200.html" },
+        { name: "函館市", lat: 41.7687, lon: 140.7288, yahoo: "https://weather.yahoo.co.jp/weather/jp/1d/2310.html" }
+      ],
       "東京都": [
-        { name: "武蔵野市 (吉祥寺)", lat: 35.7032, lon: 139.5798 },
-        { name: "新宿区", lat: 35.6938, lon: 139.7034 },
-        { name: "千代田区 (東京駅)", lat: 35.6812, lon: 139.7671 },
-        { name: "渋谷区", lat: 35.6580, lon: 139.7016 },
-        { name: "港区", lat: 35.6586, lon: 139.7514 },
-        { name: "品川区", lat: 35.6092, lon: 139.7302 },
-        { name: "立川市", lat: 35.6995, lon: 139.4138 },
-        { name: "八王子市", lat: 35.6552, lon: 139.3239 }
+        { name: "武蔵野市 (吉祥寺)", lat: 35.7032, lon: 139.5798, yahoo: "https://weather.yahoo.co.jp/weather/jp/13/4410.html" },
+        { name: "新宿区", lat: 35.6938, lon: 139.7034, yahoo: "https://weather.yahoo.co.jp/weather/jp/13/4410.html" },
+        { name: "千代田区 (東京駅)", lat: 35.6812, lon: 139.7671, yahoo: "https://weather.yahoo.co.jp/weather/jp/13/4410.html" },
+        { name: "渋谷区", lat: 35.6580, lon: 139.7016, yahoo: "https://weather.yahoo.co.jp/weather/jp/13/4410.html" },
+        { name: "港区", lat: 35.6586, lon: 139.7514, yahoo: "https://weather.yahoo.co.jp/weather/jp/13/4410.html" },
+        { name: "品川区", lat: 35.6092, lon: 139.7302, yahoo: "https://weather.yahoo.co.jp/weather/jp/13/4410.html" },
+        { name: "立川市", lat: 35.6995, lon: 139.4138, yahoo: "https://weather.yahoo.co.jp/weather/jp/13/4410.html" },
+        { name: "八王子市", lat: 35.6552, lon: 139.3239, yahoo: "https://weather.yahoo.co.jp/weather/jp/13/4410.html" }
       ],
       "神奈川県": [
-        { name: "横浜市 西区 (横浜駅)", lat: 35.4660, lon: 139.6226 },
-        { name: "川崎市 川崎区", lat: 35.5309, lon: 139.7029 }
-      ],
-      "北海道": [
-        { name: "札幌市 中央区", lat: 43.0553, lon: 141.3408 },
-        { name: "札幌市 北区", lat: 43.0908, lon: 141.3408 },
-        { name: "札幌市 西区", lat: 43.0747, lon: 141.3005 },
-        { name: "旭川市", lat: 43.7706, lon: 142.3649 },
-        { name: "函館市", lat: 41.7687, lon: 140.7288 }
+        { name: "横浜市 西区 (横浜駅)", lat: 35.4660, lon: 139.6226, yahoo: "https://weather.yahoo.co.jp/weather/jp/14/4610.html" },
+        { name: "川崎市 川崎区", lat: 35.5309, lon: 139.7029, yahoo: "https://weather.yahoo.co.jp/weather/jp/14/4610.html" }
       ],
       "愛知県": [
-        { name: "名古屋市 中村区 (名駅)", lat: 35.1709, lon: 136.8815 },
-        { name: "名古屋市 中区 (栄)", lat: 35.1685, lon: 136.9064 }
+        { name: "名古屋市 中村区 (名駅)", lat: 35.1709, lon: 136.8815, yahoo: "https://weather.yahoo.co.jp/weather/jp/23/5110.html" },
+        { name: "名古屋市 中区 (栄)", lat: 35.1685, lon: 136.9064, yahoo: "https://weather.yahoo.co.jp/weather/jp/23/5110.html" }
       ],
       "大阪府": [
-        { name: "大阪市 北区 (梅田)", lat: 34.7025, lon: 135.4959 },
-        { name: "大阪市 中央区 (難波)", lat: 34.6666, lon: 135.5003 }
+        { name: "大阪市 北区 (梅田)", lat: 34.7025, lon: 135.4959, yahoo: "https://weather.yahoo.co.jp/weather/jp/27/6200.html" },
+        { name: "大阪市 中央区 (難波)", lat: 34.6666, lon: 135.5003, yahoo: "https://weather.yahoo.co.jp/weather/jp/27/6200.html" }
       ],
       "京都府": [
-        { name: "京都市 下京区 (京都駅)", lat: 34.9858, lon: 135.7588 }
+        { name: "京都市 下京区 (京都駅)", lat: 34.9858, lon: 135.7588, yahoo: "https://weather.yahoo.co.jp/weather/jp/26/6110.html" }
       ],
       "福岡県": [
-        { name: "福岡市 博多区 (博多駅)", lat: 33.5902, lon: 130.4207 },
-        { name: "福岡市 中央区 (天神)", lat: 33.5904, lon: 130.3989 }
+        { name: "福岡市 博多区 (博多駅)", lat: 33.5902, lon: 130.4207, yahoo: "https://weather.yahoo.co.jp/weather/jp/40/8210.html" },
+        { name: "福岡市 中央区 (天神)", lat: 33.5904, lon: 130.3989, yahoo: "https://weather.yahoo.co.jp/weather/jp/40/8210.html" }
       ],
       "宮城県": [
-        { name: "仙台市 青葉区 (仙台駅)", lat: 38.2601, lon: 140.8824 }
+        { name: "仙台市 青葉区 (仙台駅)", lat: 38.2601, lon: 140.8824, yahoo: "https://weather.yahoo.co.jp/weather/jp/4/3410.html" }
       ],
       "広島県": [
-        { name: "広島市 中区", lat: 34.3853, lon: 132.4553 }
+        { name: "広島市 中区", lat: 34.3853, lon: 132.4553, yahoo: "https://weather.yahoo.co.jp/weather/jp/34/6710.html" }
       ]
     };
 
@@ -1332,10 +1403,11 @@
       }
       return {
         mode: "manual",
-        pref: "東京都",
-        cityName: "武蔵野市 (吉祥寺)",
-        lat: 35.7032,
-        lon: 139.5798
+        pref: "北海道",
+        cityName: "札幌市 中央区",
+        lat: 43.0553,
+        lon: 141.3408,
+        yahoo: "https://weather.yahoo.co.jp/weather/jp/1b/1400.html"
       };
     }
 
@@ -1541,28 +1613,29 @@
       const loc = getLocationSettings();
       if (loc.mode === 'auto') {
         if (!navigator.geolocation) {
-          fetchWeather(loc.lat, loc.lon, `${loc.cityName} (自動失敗)`);
+          fetchJMAWeather(loc.lat, loc.lon, `${loc.cityName} (自動失敗)`);
           return;
         }
         navigator.geolocation.getCurrentPosition(
           pos => {
-            fetchWeather(pos.coords.latitude, pos.coords.longitude, "現在地 (GPS)");
+            fetchJMAWeather(pos.coords.latitude, pos.coords.longitude, "現在地 (GPS)");
           },
           () => {
-            fetchWeather(loc.lat, loc.lon, `${loc.cityName} (GPS不可)`);
+            fetchJMAWeather(loc.lat, loc.lon, `${loc.cityName} (GPS不可)`);
           },
           { timeout: 8000, maximumAge: 600000 }
         );
       } else {
-        fetchWeather(loc.lat, loc.lon, loc.cityName);
+        fetchJMAWeather(loc.lat, loc.lon, loc.cityName);
       }
     }
 
     let globalDailyWeatherData = null;
+    let globalHourlyWeatherData = null;
 
-    async function fetchWeather(lat, lon, label) {
+    async function fetchJMAWeather(lat, lon, label) {
       try {
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto`;
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,precipitation,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&models=jma_seamless&timezone=auto`;
         const res = await fetch(url);
         const data = await res.json();
 
@@ -1575,7 +1648,7 @@
         document.getElementById('weather-icon-container').innerHTML = info.icon;
 
         let precipProb = 0;
-        if (data.daily && data.daily.precipitation_probability_max.length > 0) {
+        if (data.daily && data.daily.precipitation_probability_max && data.daily.precipitation_probability_max.length > 0) {
           precipProb = data.daily.precipitation_probability_max[0] ?? 0;
           document.getElementById('precip-prob').textContent = `${precipProb}`;
           document.getElementById('temp-max').textContent = `${Math.round(data.daily.temperature_2m_max[0])}`;
@@ -1591,12 +1664,76 @@
         }
 
         const now = new Date();
-        document.getElementById('weather-updated').textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} 更新`;
+        document.getElementById('weather-updated').textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} 更新 (JMAモデル)`;
 
         globalDailyWeatherData = data.daily;
+        globalHourlyWeatherData = data.hourly;
         renderWeekCalendar();
       } catch(e) {
         document.getElementById('weather-desc').textContent = '取得失敗';
+      }
+    }
+
+    // --- 24時間天気モーダル描画ロジック（3時間ごと・8コマ均等配置） ---
+    function openHourlyWeatherModal() {
+      const loc = getLocationSettings();
+      document.getElementById('modal-location-sub').textContent = document.getElementById('location-name').textContent;
+      
+      const yahooLink = document.getElementById('yahoo-weather-link');
+      if (loc.yahoo) {
+        yahooLink.href = loc.yahoo;
+        yahooLink.style.display = 'inline-block';
+      } else {
+        yahooLink.href = 'https://weather.yahoo.co.jp/weather/';
+      }
+
+      renderHourlyTimeline();
+      document.getElementById('hourly-weather-modal').style.display = 'flex';
+    }
+
+    function closeHourlyWeatherModal() {
+      document.getElementById('hourly-weather-modal').style.display = 'none';
+    }
+
+    function renderHourlyTimeline() {
+      const container = document.getElementById('hourly-timeline-container');
+      container.innerHTML = '';
+
+      if (!globalHourlyWeatherData || !globalHourlyWeatherData.time) {
+        container.innerHTML = '<div style="grid-column: span 8; padding: 20px; color: var(--text-sub); text-align: center;">予報データが読み込まれていません</div>';
+        return;
+      }
+
+      const now = new Date();
+      const currentIsoHour = now.toISOString().slice(0, 13); // "YYYY-MM-DDTHH"
+
+      let startIndex = globalHourlyWeatherData.time.findIndex(t => t.startsWith(currentIsoHour));
+      if (startIndex === -1) startIndex = 0;
+
+      // 3時間おきに8コマ（24時間分）を抽出
+      for (let i = 0; i < 8; i++) {
+        const idx = startIndex + (i * 3);
+        if (idx >= globalHourlyWeatherData.time.length) break;
+
+        const timeStr = globalHourlyWeatherData.time[idx]; // "2026-09-21T15:00"
+        const hour = timeStr.split('T')[1].slice(0, 5); // "15:00"
+        
+        const temp = Math.round(globalHourlyWeatherData.temperature_2m[idx]);
+        const wCode = globalHourlyWeatherData.weather_code[idx];
+        const pop = globalHourlyWeatherData.precipitation_probability[idx] ?? 0;
+        const precip = globalHourlyWeatherData.precipitation[idx] ?? 0;
+        const info = resolveWeatherDisplay(wCode);
+
+        const col = document.createElement('div');
+        col.className = 'hourly-col';
+        col.innerHTML = `
+          <div class="hourly-time">${hour}</div>
+          <div class="hourly-icon">${info.icon}</div>
+          <div class="hourly-temp">${temp}°</div>
+          <div class="hourly-pop">${pop}%</div>
+          <div class="hourly-precip">${precip > 0 ? `${precip}mm` : '-'}</div>
+        `;
+        container.appendChild(col);
       }
     }
 
@@ -1972,7 +2109,7 @@
     function openTrainModal() {
       initLocationSelectors();
       const loc = getLocationSettings();
-      document.getElementById('select-location-mode').value = loc.mode;
+      document.getElementById('select-location-mode').value = loc.mode || 'manual';
       onLocationModeChange();
 
       if (loc.pref && LOCATION_PRESETS[loc.pref]) {
@@ -2002,7 +2139,6 @@
       document.getElementById('input-night-start').value = timeCfg.nightStart;
       document.getElementById('input-night-bright').value = timeCfg.nightBright;
 
-      // 5タスク設定の入力反映
       const taskNames = getTaskNames();
       for (let i = 0; i < 5; i++) {
         document.getElementById(`input-task-${i}`).value = taskNames[i] || '';
@@ -2033,15 +2169,13 @@
       document.getElementById('help-modal').style.display = 'none';
     }
 
-    // モーダル背景（外側）クリックで閉じるイベントリスナー
     window.addEventListener('click', (event) => {
       const trainModal = document.getElementById('train-modal');
       const helpModal = document.getElementById('help-modal');
-      if (event.target === trainModal) {
-        closeTrainModal();
-      } else if (event.target === helpModal) {
-        closeHelpModal();
-      }
+      const hourlyModal = document.getElementById('hourly-weather-modal');
+      if (event.target === trainModal) closeTrainModal();
+      else if (event.target === helpModal) closeHelpModal();
+      else if (event.target === hourlyModal) closeHourlyWeatherModal();
     });
 
     function toggleAccordion(id) {
@@ -2074,7 +2208,6 @@
       };
       localStorage.setItem('hub_time_settings', JSON.stringify(timeSettings));
 
-      // 5タスク名の保存
       const updatedTasks = [];
       for (let i = 0; i < 5; i++) {
         const val = document.getElementById(`input-task-${i}`).value.trim();
@@ -2090,7 +2223,8 @@
         pref: pref,
         cityName: cityData.name,
         lat: cityData.lat,
-        lon: cityData.lon
+        lon: cityData.lon,
+        yahoo: cityData.yahoo || "https://weather.yahoo.co.jp/weather/"
       };
       localStorage.setItem('hub_location_settings', JSON.stringify(locSettings));
 
@@ -2112,7 +2246,6 @@
       restartTrainTimer();
       updateTrainCountdown();
       updateTimeAndTheme();
-      renderWeekCalendar();
       renderChecker();
       updateBottomViewUI();
     }
@@ -2186,7 +2319,6 @@
         restartTrainTimer();
         updateTrainCountdown();
         updateTimeAndTheme();
-        renderWeekCalendar();
         renderChecker();
         alert('インポートが完了しました。');
       } catch(e) {
