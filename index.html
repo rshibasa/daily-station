@@ -510,7 +510,7 @@
       margin-top: 4px;
     }
 
-    /* ペイン2: 週間カレンダービュー (明日からの7日間) */
+    /* ペイン2: 週間カレンダービュー (文字拡大・視認性強化版) */
     .week-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -524,25 +524,26 @@
       background: var(--bg-color);
       border: 1px solid var(--border-color);
       border-radius: 12px;
-      padding: 4px 4px;
+      padding: 6px 4px;
       display: grid;
-      grid-template-rows: auto auto 28px auto auto 22px;
+      grid-template-rows: auto auto 34px auto auto 24px;
       align-items: center;
       justify-items: center;
       text-align: center;
-      row-gap: 1px;
+      row-gap: 2px;
     }
 
     .week-col-date {
-      font-size: 0.95rem;
+      font-size: 1.15rem;
       font-weight: 800;
       line-height: 1;
       font-feature-settings: "tnum";
+      letter-spacing: -0.5px;
     }
 
     .week-col-day {
-      font-size: 0.72rem;
-      font-weight: 700;
+      font-size: 0.85rem;
+      font-weight: 800;
       white-space: nowrap;
     }
 
@@ -550,13 +551,13 @@
     .week-col-day.sun { color: var(--badge-weekend-sun); }
     .week-col-day.holiday {
       color: var(--badge-weekend-sun);
-      font-size: 0.68rem;
+      font-size: 0.78rem;
       letter-spacing: -0.5px;
     }
 
     .week-weather-icon {
-      width: 26px;
-      height: 26px;
+      width: 32px;
+      height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -568,36 +569,38 @@
     }
 
     .week-weather-desc {
-      font-size: 0.68rem;
-      font-weight: 700;
+      font-size: 0.8rem;
+      font-weight: 800;
       color: var(--accent-color);
       line-height: 1;
       white-space: nowrap;
     }
 
     .week-temp {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--text-sub);
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--text-main);
       line-height: 1;
       margin-top: 1px;
+      font-feature-settings: "tnum";
+      letter-spacing: -0.5px;
     }
 
     .week-trash-slot {
       width: 100%;
-      height: 20px;
+      height: 22px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 2px;
+      padding: 0 1px;
     }
 
     .week-trash-text {
-      font-size: 0.65rem;
+      font-size: 0.75rem;
       font-weight: 700;
       color: var(--alert-text);
       background: var(--alert-bg);
-      padding: 1px 4px;
+      padding: 2px 4px;
       border-radius: 4px;
       max-width: 100%;
       overflow: hidden;
@@ -980,7 +983,7 @@
           </div>
         </div>
 
-        <!-- ペイン2: 週間カレンダー (明日からの7日間) -->
+        <!-- ペイン2: 週間カレンダー (明日からの7日間・文字拡大版) -->
         <div class="slider-pane">
           <div class="week-grid" id="week-grid-container"></div>
         </div>
@@ -1669,6 +1672,7 @@
       return matched.length > 0 ? matched.join(' / ') : 'なし';
     }
 
+    // 夕方（16:00以降）になると翌日のごみを強調
     function updateTrashReminders(now) {
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -2030,7 +2034,7 @@
       }
     }, { passive: true });
 
-    // --- 7. 週間カレンダー描画ロジック (明日からの7日間) ---
+    // --- 7. 週間カレンダー描画ロジック (明日からの7日間・文字拡大版) ---
     function renderWeekCalendar() {
       const container = document.getElementById('week-grid-container');
       container.innerHTML = '';
