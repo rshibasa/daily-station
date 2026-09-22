@@ -195,7 +195,6 @@
       transition: all 0.3s ease;
     }
 
-    /* ごみ出し強調状態（朝は今日、夕方以降は明日） */
     .trash-badge.highlighted {
       background: var(--alert-bg);
       border-color: var(--accent-color);
@@ -352,7 +351,6 @@
       transition: all 0.2s ease;
     }
 
-    /* 現在時間帯のハイライト枠 */
     .hourly-col.is-current {
       border: 2px solid var(--highlight-border);
       background: var(--highlight-bg);
@@ -510,19 +508,6 @@
       font-weight: 700;
       font-feature-settings: "tnum";
       margin-top: 4px;
-    }
-
-    /* ダイヤ切り替え用バッジ（タップで当日限定オーバーライド） */
-    .train-badge-interactive {
-      cursor: pointer;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      transition: background 0.2s;
-    }
-    .train-badge-interactive:active {
-      transform: scale(0.95);
     }
 
     /* ペイン2: 週間カレンダービュー (明日からの7日間) */
@@ -978,7 +963,7 @@
         <!-- ペイン1: 電車案内 -->
         <div class="slider-pane">
           <div style="display:flex; justify-content:flex-end; align-items:center; font-size:0.8rem; color:var(--text-sub); margin-top:2px;">
-            <span id="train-mode-badge" class="train-badge-interactive" onclick="cycleTrainScheduleOverride()" title="タップして今日だけダイヤを強制切替" style="margin-right: 8px;">平日ダイヤ</span>
+            <span id="train-mode-badge" style="margin-right: 8px;">平日ダイヤ</span>
             <span id="train-display-mode-label">[凡そ]</span>
           </div>
           <div class="train-stage">
@@ -1239,7 +1224,7 @@
 
       <div class="help-section">
         <h4>2. 当日限定のダイヤ手動切り替え</h4>
-        <p>祝日法で定義されていない独自の休日や振替日など、今日だけ「土休日ダイヤ」を適用したい場合、電車カードのダイヤバッジ（またはフッターの「ダイヤ切替」ボタン）をタップするだけで強制変更できます。深夜0時を過ぎると自動で解除され、翌日は通常の自動カレンダー判定に戻ります。</p>
+        <p>祝日法で定義されていない独自の休日や振替日など、今日だけ「土休日ダイヤ」を適用したい場合、フッターの「ダイヤ切替」ボタンをタップするだけで強制変更できます。深夜0時を過ぎると自動で解除され、翌日は通常の自動カレンダー判定に戻ります。</p>
       </div>
 
       <div class="help-section">
@@ -1393,7 +1378,7 @@
     let activeTimerInterval = null;
 
     function handleScreenTap(event) {
-      if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls') || event.target.closest('.checker-item') || event.target.closest('.train-badge-interactive')) return;
+      if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls') || event.target.closest('.checker-item')) return;
       
       const currentMode = getCurrentTimeMode();
       const cfg = getTimeSettings();
@@ -1684,7 +1669,6 @@
       return matched.length > 0 ? matched.join(' / ') : 'なし';
     }
 
-    // 夕方（16:00以降）になると翌日のごみを強調
     function updateTrashReminders(now) {
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1736,7 +1720,7 @@
       </svg>`,
 
       snow: `<svg viewBox="0 0 24 24">
-        <path d="M16.5 14H7.2a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.5 8.5a3.8 3.8 0 0 1-1 6z" 
+        <path d="M16.5 14H7.2a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.5 8a3.8 3.8 0 0 1-1 6z" 
               fill="var(--wn-cloud-fill)" stroke="var(--wn-cloud)" stroke-width="2" stroke-linejoin="round"/>
         <path d="M8 17v4.5M6 19.2h4M14.5 17v4.5M12.5 19.2h4" 
               stroke="var(--wn-snow)" stroke-width="2.4" stroke-linecap="round"/>
