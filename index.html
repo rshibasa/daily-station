@@ -188,14 +188,19 @@
 
     .trash-badge {
       background: var(--bg-color);
-      padding: 3px 10px;
-      border-radius: 6px;
-      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 4px 10px;
+      border-radius: 8px;
+      color: var(--text-sub);
+      transition: all 0.3s ease;
     }
 
-    .trash-badge.today {
+    /* ごみ出し強調状態（朝は今日、夕方以降は明日） */
+    .trash-badge.highlighted {
       background: var(--alert-bg);
+      border-color: var(--accent-color);
       color: var(--alert-text);
+      font-weight: 700;
     }
 
     /* --- 上段右: 天気カード（JMA気象庁モデル・高視認性版） --- */
@@ -505,6 +510,19 @@
       font-weight: 700;
       font-feature-settings: "tnum";
       margin-top: 4px;
+    }
+
+    /* ダイヤ切り替え用バッジ（タップで当日限定オーバーライド） */
+    .train-badge-interactive {
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      transition: background 0.2s;
+    }
+    .train-badge-interactive:active {
+      transform: scale(0.95);
     }
 
     /* ペイン2: 週間カレンダービュー (明日からの7日間) */
@@ -897,8 +915,8 @@
         <div id="clock-time" class="clock-time">--:--</div>
       </div>
       <div class="trash-reminder-row">
-        <div class="trash-badge today">今日: <span id="trash-today">なし</span></div>
-        <div class="trash-badge">明日: <span id="trash-tomorrow">なし</span></div>
+        <div id="trash-badge-today" class="trash-badge">今日: <span id="trash-today">なし</span></div>
+        <div id="trash-badge-tomorrow" class="trash-badge">明日: <span id="trash-tomorrow">なし</span></div>
       </div>
     </div>
 
@@ -959,8 +977,8 @@
       <div class="view-slider" id="bottom-slider">
         <!-- ペイン1: 電車案内 -->
         <div class="slider-pane">
-          <div style="display:flex; justify-content:flex-end; font-size:0.8rem; color:var(--text-sub); margin-top:2px;">
-            <span id="train-mode-badge" style="margin-right: 8px;">平日ダイヤ</span>
+          <div style="display:flex; justify-content:flex-end; align-items:center; font-size:0.8rem; color:var(--text-sub); margin-top:2px;">
+            <span id="train-mode-badge" class="train-badge-interactive" onclick="cycleTrainScheduleOverride()" title="タップして今日だけダイヤを強制切替" style="margin-right: 8px;">平日ダイヤ</span>
             <span id="train-display-mode-label">[凡そ]</span>
           </div>
           <div class="train-stage">
@@ -992,6 +1010,7 @@
   <footer>
     <div id="hub-status-text">モード: 判定中</div>
     <div class="footer-actions">
+      <button onclick="cycleTrainScheduleOverride()">ダイヤ切替: <span id="btn-schedule-text">自動</span></button>
       <button onclick="toggleTrainDisplayMode()">表示: <span id="btn-mode-text">凡そ</span></button>
       <button onclick="openHelpModal()">使い方・ヘルプ</button>
       <button onclick="openTrainModal()">設定</button>
@@ -1080,6 +1099,16 @@
             <option value="300">5分</option>
           </select>
         </div>
+      </div>
+
+      <!-- ダイヤの当日限定オーバーライド設定 -->
+      <div class="form-item">
+        <label>今日の電車運行ダイヤ指定（0時で自動解除）</label>
+        <select id="select-schedule-override">
+          <option value="auto">自動判定（祝日・土日は土休日、平日は平日）</option>
+          <option value="weekend">今日だけ強制：土休日ダイヤ</option>
+          <option value="weekday">今日だけ強制：平日ダイヤ</option>
+        </select>
       </div>
 
       <!-- Todoチェッカー設定項目 (5項目) -->
@@ -1209,21 +1238,13 @@
       </div>
 
       <div class="help-section">
-        <h4>2. 時間帯別の最適輝度とタップブースト</h4>
-        <p>液晶保護と眩しさ防止を両立する動的輝度制御：</p>
-        <ul>
-          <li><strong>日中モード（通常55%）:</strong> タップすると設定時間（デフォルト5分間）だけ輝度が+20%（75%）に一時ブーストされます。</li>
-          <li><strong>深夜モード（通常20%）:</strong> タップすると設定時間（デフォルト30秒間）だけ70%（眩しすぎない明るさ）に一時復帰します。</li>
-        </ul>
+        <h4>2. 当日限定のダイヤ手動切り替え</h4>
+        <p>祝日法で定義されていない独自の休日や振替日など、今日だけ「土休日ダイヤ」を適用したい場合、電車カードのダイヤバッジ（またはフッターの「ダイヤ切替」ボタン）をタップするだけで強制変更できます。深夜0時を過ぎると自動で解除され、翌日は通常の自動カレンダー判定に戻ります。</p>
       </div>
 
       <div class="help-section">
-        <h4>3. 下段スワイプモジュール（3画面）</h4>
-        <ul>
-          <li><strong>左右スワイプ切替:</strong> 下段モジュールを左右にスワイプ（または右上の矢印ボタン）することで、「電車案内」「週間カレンダー」「Todoチェッカー」の3画面を切り替えます。選択状態は自動保存されます。</li>
-          <li><strong>週間カレンダー:</strong> 今日の重複を避け、明日からの7日間の予報・気温・ごみ収集予定を表示します。</li>
-          <li><strong>デイリーTodoチェッカー:</strong> 画面をタップするとチェックが入り、完了時刻が記録されます。深夜0時を過ぎると自動的にリセットされ、毎朝新しい状態で使用できます。タスク名は設定から編集可能です。</li>
-        </ul>
+        <h4>3. 時間連動のごみ出しリマインダー</h4>
+        <p>朝〜昼（15:59まで）は「今日のごみ」を青色で強調表示します。夕方（16:00以降）になると翌朝の準備のため自動的に「明日のごみ」が青色強調に切り替わります。</p>
       </div>
 
       <div class="modal-footer">
@@ -1282,10 +1303,66 @@
       return null;
     }
 
+    // 当日限定の運行ダイヤ強制オーバーライド取得（0時リセット対応）
+    function getScheduleOverrideMode(nowDate) {
+      const saved = localStorage.getItem('hub_schedule_override');
+      if (!saved) return 'auto';
+      try {
+        const obj = JSON.parse(saved);
+        const y = nowDate.getFullYear();
+        const m = String(nowDate.getMonth() + 1).padStart(2, '0');
+        const d = String(nowDate.getDate()).padStart(2, '0');
+        const todayStr = `${y}-${m}-${d}`;
+        if (obj.date === todayStr) {
+          return obj.mode; // 'auto', 'weekend', 'weekday'
+        }
+      } catch(e) {}
+      return 'auto';
+    }
+
+    function setScheduleOverrideMode(mode, nowDate) {
+      const y = nowDate.getFullYear();
+      const m = String(nowDate.getMonth() + 1).padStart(2, '0');
+      const d = String(nowDate.getDate()).padStart(2, '0');
+      const todayStr = `${y}-${m}-${d}`;
+      localStorage.setItem('hub_schedule_override', JSON.stringify({ date: todayStr, mode: mode }));
+    }
+
     function isHolidayOrWeekend(date) {
+      const override = getScheduleOverrideMode(date);
+      if (override === 'weekend') return true;
+      if (override === 'weekday') return false;
+
       const d = date.getDay();
       if (d === 0 || d === 6) return true;
       return getJapaneseHolidayName(date) !== null;
+    }
+
+    function cycleTrainScheduleOverride() {
+      const now = new Date();
+      const current = getScheduleOverrideMode(now);
+      let next = 'weekend';
+      if (current === 'weekend') next = 'weekday';
+      else if (current === 'weekday') next = 'auto';
+      else next = 'weekend';
+
+      setScheduleOverrideMode(next, now);
+      updateTrainCountdown();
+      syncScheduleOverrideUI();
+    }
+
+    function syncScheduleOverrideUI() {
+      const now = new Date();
+      const mode = getScheduleOverrideMode(now);
+      const sel = document.getElementById('select-schedule-override');
+      if (sel) sel.value = mode;
+
+      const btnText = document.getElementById('btn-schedule-text');
+      if (btnText) {
+        if (mode === 'weekend') btnText.textContent = "土休日(固定)";
+        else if (mode === 'weekday') btnText.textContent = "平日(固定)";
+        else btnText.textContent = "自動";
+      }
     }
 
     // --- 1. 時間帯モード・輝度制御・ピクセルシフト ---
@@ -1316,7 +1393,7 @@
     let activeTimerInterval = null;
 
     function handleScreenTap(event) {
-      if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls') || event.target.closest('.checker-item')) return;
+      if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls') || event.target.closest('.checker-item') || event.target.closest('.train-badge-interactive')) return;
       
       const currentMode = getCurrentTimeMode();
       const cfg = getTimeSettings();
@@ -1512,6 +1589,7 @@
 
       updateTrashReminders(now);
       checkAndResetDailyTasks(now);
+      syncScheduleOverrideUI();
       applyThemeAndBrightness();
     }
 
@@ -1606,12 +1684,26 @@
       return matched.length > 0 ? matched.join(' / ') : 'なし';
     }
 
+    // 夕方（16:00以降）になると翌日のごみを強調
     function updateTrashReminders(now) {
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
       document.getElementById('trash-today').textContent = getTrashForDate(now);
       document.getElementById('trash-tomorrow').textContent = getTrashForDate(tomorrow);
+
+      const todayBadge = document.getElementById('trash-badge-today');
+      const tomorrowBadge = document.getElementById('trash-badge-tomorrow');
+
+      const isEveningOrNight = (now.getHours() >= 16);
+
+      if (isEveningOrNight) {
+        todayBadge.className = 'trash-badge';
+        tomorrowBadge.className = 'trash-badge highlighted';
+      } else {
+        todayBadge.className = 'trash-badge highlighted';
+        tomorrowBadge.className = 'trash-badge';
+      }
     }
 
     // --- 4. ウェザーニュース調 セマンティックカラーSVGアイコン群 ---
@@ -1644,7 +1736,7 @@
       </svg>`,
 
       snow: `<svg viewBox="0 0 24 24">
-        <path d="M16.5 14H7.2a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.5 8a3.8 3.8 0 0 1-1 6z" 
+        <path d="M16.5 14H7.2a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.5 8.5a3.8 3.8 0 0 1-1 6z" 
               fill="var(--wn-cloud-fill)" stroke="var(--wn-cloud)" stroke-width="2" stroke-linejoin="round"/>
         <path d="M8 17v4.5M6 19.2h4M14.5 17v4.5M12.5 19.2h4" 
               stroke="var(--wn-snow)" stroke-width="2.4" stroke-linecap="round"/>
@@ -1767,7 +1859,6 @@
         return;
       }
 
-      // 今日の日付文字列（YYYY-MM-DD）
       const now = new Date();
       const y = now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -1775,10 +1866,8 @@
       const todayDateStr = `${y}-${m}-${d}`;
       const currentHour = now.getHours();
 
-      // 固定表示する8つの目標時刻（00:00 〜 21:00）
       const targetHours = [0, 3, 6, 9, 12, 15, 18, 21];
 
-      // 現在時刻がどのコマに最も近いか（または次の直近か）を判定
       let currentTargetHour = 21;
       for (let i = 0; i < targetHours.length; i++) {
         if (currentHour < targetHours[i] + 3) {
@@ -1965,7 +2054,6 @@
       const today = new Date();
       const days = ['日', '月', '火', '水', '木', '金', '土'];
 
-      // i = 1 から開始し、明日〜7日後（計7日間）を描画
       for (let i = 1; i <= 7; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
@@ -2100,11 +2188,17 @@
       const isHolidaySchedule = isHolidayOrWeekend(now);
       const schedule = isHolidaySchedule ? config.weekend : config.weekday;
       const displayMode = getTrainDisplayMode();
+      const override = getScheduleOverrideMode(now);
 
       if (currentBottomView === 0) {
         document.getElementById('bottom-header-title').textContent = `${config.station} - ${config.direction}`;
       }
-      document.getElementById('train-mode-badge').textContent = isHolidaySchedule ? "土休日ダイヤ" : "平日ダイヤ";
+
+      let badgeLabel = isHolidaySchedule ? "土休日ダイヤ" : "平日ダイヤ";
+      if (override !== 'auto') {
+        badgeLabel += " (手動)";
+      }
+      document.getElementById('train-mode-badge').textContent = badgeLabel;
 
       const currentSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
 
@@ -2226,6 +2320,9 @@
       document.getElementById('input-night-bright').value = timeCfg.nightBright;
       document.getElementById('input-night-boost-time').value = timeCfg.nightBoostTime || "30";
 
+      const now = new Date();
+      document.getElementById('select-schedule-override').value = getScheduleOverrideMode(now);
+
       const taskNames = getTaskNames();
       for (let i = 0; i < 5; i++) {
         document.getElementById(`input-task-${i}`).value = taskNames[i] || '';
@@ -2297,6 +2394,10 @@
       };
       localStorage.setItem('hub_time_settings', JSON.stringify(timeSettings));
 
+      const now = new Date();
+      const overrideVal = document.getElementById('select-schedule-override').value;
+      setScheduleOverrideMode(overrideVal, now);
+
       const updatedTasks = [];
       for (let i = 0; i < 5; i++) {
         const val = document.getElementById(`input-task-${i}`).value.trim();
@@ -2340,6 +2441,7 @@
     }
 
     function exportSettingsFile() {
+      const now = new Date();
       const exportData = {
         train: loadTrainConfig(),
         location: getLocationSettings(),
@@ -2348,18 +2450,20 @@
         timeSettings: getTimeSettings(),
         taskNames: getTaskNames(),
         taskProgress: getTaskProgress(),
+        scheduleOverride: getScheduleOverrideMode(now),
         bottomView: currentBottomView
       };
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `daily-station-settings-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `daily-station-settings-${now.toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
     }
 
     function copyExportJson() {
+      const now = new Date();
       const exportData = {
         train: loadTrainConfig(),
         location: getLocationSettings(),
@@ -2368,6 +2472,7 @@
         timeSettings: getTimeSettings(),
         taskNames: getTaskNames(),
         taskProgress: getTaskProgress(),
+        scheduleOverride: getScheduleOverrideMode(now),
         bottomView: currentBottomView
       };
       const jsonStr = JSON.stringify(exportData, null, 2);
@@ -2396,6 +2501,12 @@
         if (parsed.timeSettings) localStorage.setItem('hub_time_settings', JSON.stringify(parsed.timeSettings));
         if (parsed.taskNames) localStorage.setItem('hub_task_names', JSON.stringify(parsed.taskNames));
         if (parsed.taskProgress) localStorage.setItem('hub_task_progress', JSON.stringify(parsed.taskProgress));
+        
+        const now = new Date();
+        if (parsed.scheduleOverride) {
+          setScheduleOverrideMode(parsed.scheduleOverride, now);
+        }
+
         if (parsed.bottomView !== undefined) {
           currentBottomView = parsed.bottomView;
           localStorage.setItem('hub_bottom_view', currentBottomView);
@@ -2427,6 +2538,7 @@
 
     // --- 初期ロードと定期実行タイマー ---
     syncDisplayModeUI();
+    syncScheduleOverrideUI();
     renderChecker();
     updateBottomViewUI();
     updateTimeAndTheme();
