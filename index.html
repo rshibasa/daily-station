@@ -464,27 +464,36 @@
       height: 100%;
     }
 
-    /* ペイン1: 電車ビュー */
+    /* ペイン1: 電車ビュー (次発大きめ・次々発小さめ) */
     .train-stage {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
       align-items: center;
-      justify-content: space-around;
       margin: 4px 0;
+      gap: 12px;
     }
 
     .train-primary {
       text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     .train-sub-label {
       font-size: 0.8rem;
       color: var(--text-sub);
-      font-weight: 600;
+      font-weight: 700;
       margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
+    /* 次発カウントダウン（少し大きめ） */
     .train-countdown-huge {
-      font-size: 4rem;
+      font-size: 4.0rem;
       font-weight: 800;
       line-height: 0.95;
       letter-spacing: -1.5px;
@@ -500,17 +509,36 @@
 
     .train-secondary-col {
       border-left: 2px solid var(--border-color);
-      padding-left: 36px;
+      padding-left: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
     }
 
+    /* 次々発の時刻表示（少し小さめ） */
     .train-next-huge {
-      font-size: 1.6rem;
-      font-weight: 700;
+      font-size: 2.1rem;
+      font-weight: 800;
+      line-height: 1.1;
       font-feature-settings: "tnum";
+      letter-spacing: -0.5px;
+      color: var(--text-main);
       margin-top: 4px;
     }
 
-    /* ペイン2: 週間カレンダービュー (文字拡大・視認性強化版) */
+    .train-eta-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--alert-text);
+      background: var(--alert-bg);
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+
+    /* ペイン2: 週間カレンダービュー (明日からの7日間・文字拡大版) */
     .week-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -964,20 +992,25 @@
       </div>
 
       <div class="view-slider" id="bottom-slider">
-        <!-- ペイン1: 電車案内 -->
+        <!-- ペイン1: 電車案内 (次発大きめ・次々発小さめ) -->
         <div class="slider-pane">
           <div style="display:flex; justify-content:flex-end; align-items:center; font-size:0.8rem; color:var(--text-sub); margin-top:2px;">
             <span id="train-mode-badge" style="margin-right: 8px;">平日ダイヤ</span>
             <span id="train-display-mode-label">[凡そ]</span>
           </div>
           <div class="train-stage">
+            <!-- 左列: 次発 (カウントダウン・少し大きめ) -->
             <div class="train-primary">
-              <div class="train-sub-label">次の発車まで</div>
+              <div class="train-sub-label">次発（直近の便）</div>
               <div id="train-countdown" class="train-countdown-huge">--:--</div>
               <div id="train-next-dep" class="train-departure-clock">発車予定: --:--</div>
             </div>
+            <!-- 右列: 次々発 (予定時刻・少し小さめ) -->
             <div class="train-secondary-col">
-              <div class="train-sub-label">その次の発車（次々発）</div>
+              <div class="train-sub-label">
+                <span>次々発（次の便）</span>
+                <span id="train-subsequent-eta" class="train-eta-badge">約 -- 分後</span>
+              </div>
               <div id="train-subsequent" class="train-next-huge">--:--</div>
             </div>
           </div>
@@ -1232,8 +1265,8 @@
       </div>
 
       <div class="help-section">
-        <h4>3. 時間連動のごみ出しリマインダー</h4>
-        <p>朝〜昼（15:59まで）は「今日のごみ」を青色で強調表示します。夕方（16:00以降）になると翌朝の準備のため自動的に「明日のごみ」が青色強調に切り替わります。</p>
+        <h4>3. 電車発車案内（次発・次々発）</h4>
+        <p>直近の「次発」は大きなカウントダウンで表示し、駅までの徒歩移動を考慮した「次々発」は予定時刻と「約○分後」を並列表示しています。2本の便を同時に把握して無理のない移動をサポートします。</p>
       </div>
 
       <div class="modal-footer">
@@ -1672,7 +1705,6 @@
       return matched.length > 0 ? matched.join(' / ') : 'なし';
     }
 
-    // 夕方（16:00以降）になると翌日のごみを強調
     function updateTrashReminders(now) {
       const tomorrow = new Date(now);
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -1724,7 +1756,7 @@
       </svg>`,
 
       snow: `<svg viewBox="0 0 24 24">
-        <path d="M16.5 14H7.2a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.5 8a3.8 3.8 0 0 1-1 6z" 
+        <path d="M16.5 14H7.2a4.5 4.5 0 0 1-.4-8.98A5.5 5.5 0 0 1 17.5 8.5a3.8 3.8 0 0 1-1 6z" 
               fill="var(--wn-cloud-fill)" stroke="var(--wn-cloud)" stroke-width="2" stroke-linejoin="round"/>
         <path d="M8 17v4.5M6 19.2h4M14.5 17v4.5M12.5 19.2h4" 
               stroke="var(--wn-snow)" stroke-width="2.4" stroke-linecap="round"/>
@@ -2091,7 +2123,7 @@
       }
     }
 
-    // --- 8. 電車発車案内ロジック ---
+    // --- 8. 電車発車案内ロジック (次発大きめ・次々発小さめ) ---
     const DEFAULT_TRAIN_DATA = {
       station: "吉祥寺駅",
       direction: "中央線快速 東京方面",
@@ -2199,6 +2231,9 @@
         }
       }
 
+      const subsequentEtaEl = document.getElementById('train-subsequent-eta');
+      const subsequentEl = document.getElementById('train-subsequent');
+
       if (nextIndex !== -1) {
         const nextTimeStr = schedule[nextIndex];
         const [nh, nm] = nextTimeStr.split(':').map(Number);
@@ -2209,7 +2244,7 @@
 
         if (displayMode === 'approx') {
           if (remMin === 0) {
-            document.getElementById('train-countdown').textContent = "まもなく発車";
+            document.getElementById('train-countdown').textContent = "まもなく";
           } else {
             document.getElementById('train-countdown').textContent = `約 ${remMin} 分後`;
           }
@@ -2220,18 +2255,24 @@
 
         document.getElementById('train-next-dep').textContent = `発車予定: ${nextTimeStr}`;
 
+        // 次々発の計算と描画（従来の「約○分後」表記）
         if (nextIndex + 1 < schedule.length) {
           const subTimeStr = schedule[nextIndex + 1];
           const [sh, sm] = subTimeStr.split(':').map(Number);
           const subDiffMin = Math.floor(((sh * 3600 + sm * 60) - currentSec) / 60);
-          document.getElementById('train-subsequent').textContent = `${subTimeStr} (約${subDiffMin}分後)`;
+          subsequentEl.textContent = subTimeStr;
+          subsequentEtaEl.textContent = `約 ${subDiffMin} 分後`;
+          subsequentEtaEl.style.display = 'inline-block';
         } else {
-          document.getElementById('train-subsequent').textContent = "本日の最終便";
+          subsequentEl.textContent = "--:--";
+          subsequentEtaEl.textContent = "次便なし";
+          subsequentEtaEl.style.display = 'inline-block';
         }
       } else {
         document.getElementById('train-countdown').textContent = "--:--";
         document.getElementById('train-next-dep').textContent = "運行終了";
-        document.getElementById('train-subsequent').textContent = "便なし";
+        subsequentEl.textContent = "--:--";
+        subsequentEtaEl.style.display = 'none';
       }
     }
 
