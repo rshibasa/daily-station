@@ -78,6 +78,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    /* 基本画面（通常時）: 長押しルーペ・テキスト選択を完全無効化 */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
       background-color: var(--bg-color);
@@ -89,8 +90,12 @@
       gap: 12px;
       transition: background-color 0.25s ease, color 0.25s ease;
       overflow: hidden;
-      user-select: none;
       position: relative;
+
+      /* iOS長押しメニュー抑制 & 選択禁止 */
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     #brightness-filter {
@@ -634,7 +639,6 @@
       cursor: pointer;
       transition: background 0.2s, border-color 0.2s, transform 0.1s;
       text-align: center;
-      -webkit-touch-callout: none;
     }
 
     .checker-item:active {
@@ -744,7 +748,7 @@
       font-weight: 600;
     }
 
-    /* --- モーダル共通スタイル --- */
+    /* --- モーダル共通スタイル（テキスト選択・ルーペを明示的に許可） --- */
     .modal {
       display: none;
       position: fixed;
@@ -765,6 +769,11 @@
       max-height: 90vh;
       overflow-y: auto;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+
+      /* モーダル内部はテキスト選択・長押しルーペを明示的に有効化 */
+      -webkit-touch-callout: default;
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     .modal-header {
@@ -782,6 +791,11 @@
       width: 100%; padding: 8px; border: 1px solid var(--border-color);
       border-radius: 6px; background: var(--bg-color); color: var(--text-main);
       font-size: 0.85rem; font-family: inherit;
+
+      /* 入力要素内でのテキスト選択・カーソル移動を保証 */
+      -webkit-touch-callout: default;
+      -webkit-user-select: text;
+      user-select: text;
     }
     .form-item textarea { height: 48px; resize: vertical; }
 
@@ -835,6 +849,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      user-select: none;
     }
 
     .collapsible-content {
@@ -843,6 +858,9 @@
       font-size: 0.8rem;
       color: var(--text-sub);
       line-height: 1.5;
+      -webkit-touch-callout: default;
+      -webkit-user-select: text;
+      user-select: text;
     }
 
     .collapsible-content.open { display: block; }
@@ -863,6 +881,7 @@
       color: var(--text-main);
       cursor: pointer;
       font-weight: 600;
+      user-select: none;
     }
 
     .modal-footer {
@@ -881,6 +900,7 @@
       cursor: pointer;
       font-size: 0.85rem;
       font-weight: 600;
+      user-select: none;
     }
 
     .help-section {
