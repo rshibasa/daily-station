@@ -503,7 +503,6 @@
       padding-left: 32px;
     }
 
-    /* 次々発の表示（時刻と残時間を同等サイズ・同等ウェイトで統一） */
     .train-next-huge {
       font-size: 2.1rem;
       font-weight: 800;
@@ -613,7 +612,7 @@
       display: inline-block;
     }
 
-    /* ペイン3: Todoチェッカービュー */
+    /* ペイン3: Todoチェッカービュー (長押し解除対応) */
     .checker-container {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -635,6 +634,7 @@
       cursor: pointer;
       transition: background 0.2s, border-color 0.2s, transform 0.1s;
       text-align: center;
+      -webkit-touch-callout: none;
     }
 
     .checker-item:active {
@@ -644,6 +644,12 @@
     .checker-item.done {
       background: var(--check-done-bg);
       border-color: var(--check-done-border);
+    }
+
+    .checker-item.pressing {
+      opacity: 0.8;
+      transform: scale(0.94);
+      border-color: #d93025;
     }
 
     .checker-icon {
@@ -690,6 +696,13 @@
 
     .checker-item.done .checker-time {
       color: var(--check-done-text);
+    }
+
+    .checker-unlock-hint {
+      font-size: 0.62rem;
+      color: var(--text-sub);
+      opacity: 0.8;
+      margin-top: 1px;
     }
 
     /* トースト通知：画面左上に配置 */
@@ -992,7 +1005,7 @@
           <div class="week-grid" id="week-grid-container"></div>
         </div>
 
-        <!-- ペイン3: Todoチェッカー -->
+        <!-- ペイン3: Todoチェッカー (長押し解除対応) -->
         <div class="slider-pane">
           <div class="checker-container" id="checker-grid-container"></div>
         </div>
@@ -1212,32 +1225,63 @@
     </div>
   </div>
 
-  <!-- 3. 使い方・ヘルプモーダル -->
+  <!-- 3. 使い方・ヘルプモーダル（全機能網羅・最新版） -->
   <div id="help-modal" class="modal">
-    <div class="modal-box">
+    <div class="modal-box" style="max-width: 600px;">
       <div class="modal-header">
         <h3>📖 daily station 使い方ガイド</h3>
-        <span style="font-size:0.75rem; color:var(--text-sub);">ヘルプ・運用Tips</span>
+        <span style="font-size:0.75rem; color:var(--text-sub);">運用Tips・機能一覧</span>
       </div>
 
       <div class="help-section">
         <h4>1. iPadでの全画面・常時卓上運用</h4>
         <p>古いiPadを専用端末として設置する場合の推奨設定です：</p>
         <ul>
-          <li><strong>PWA化（アドレスバーの非表示）:</strong> Safariでこのページを開き、共有アイコンから「ホーム画面に追加」を実行して起動してください。</li>
-          <li><strong>自動スリープの解除:</strong> iPadの「設定」アプリ ＞「画面表示と明るさ」＞「自動ロック」を「なし」に設定します。</li>
-          <li><strong>アクセスガイド（推奨）:</strong> iPadの「設定」＞「アクセシビリティ」＞「アクセスガイド」を有効にし、本アプリ起動中に電源ボタンをトリプルクリックすると、誤タッチやホームバーの誤操作を完全に防止できます。</li>
+          <li><strong>PWA化（全画面表示）:</strong> Safariで開き、共有メニューから「ホーム画面に追加」を行って起動すると、アドレスバーのない全画面アプリとして動作します。</li>
+          <li><strong>自動ロックの解除:</strong> iPadの「設定」＞「画面表示と明るさ」＞「自動ロック」を「なし」に設定します。</li>
+          <li><strong>アクセスガイド（推奨）:</strong> iPadの「設定」＞「アクセシビリティ」＞「アクセスガイド」を有効にし、本アプリ起動中に電源ボタンをトリプルクリックすると、誤操作やスワイプによるアプリ終了を完全に防止できます。</li>
         </ul>
       </div>
 
       <div class="help-section">
-        <h4>2. 当日限定のダイヤ手動切り替え</h4>
-        <p>祝日法で定義されていない独自の休日や振替日など、今日だけ「土休日ダイヤ」を適用したい場合、フッターの「ダイヤ切替」ボタンをタップするだけで強制変更できます。深夜0時を過ぎると自動で解除され、翌日は通常の自動カレンダー判定に戻ります。</p>
+        <h4>2. ディスプレイ保護・動的輝度 & タップブースト</h4>
+        <ul>
+          <li><strong>ピクセルシフト:</strong> 焼き付き・残像を防止するため、10分ごとに画面全体を微細にランダム移動（±3px）させます。</li>
+          <li><strong>時間帯モード:</strong> 「出勤準備（100%）」「日中（55%）」「深夜（20%＋ダークテーマ）」を自動切替。</li>
+          <li><strong>タップブースト:</strong> 画面を軽くタップすると、日中は+20%増光、深夜は70%に一時復帰します（左上に残り時間カウントダウンを表示。時間は設定から変更可能）。</li>
+        </ul>
       </div>
 
       <div class="help-section">
-        <h4>3. 電車発車案内（次発・次々発）</h4>
-        <p>直近の「次発」は大きなカウントダウンで表示し、その次の「次々発」は予定時刻と「約○分後」を並列表示しています。2本の便を同時に把握して無理のない移動をサポートします。</p>
+        <h4>3. 天気予報 & 今日1日の推移（気象庁JMAモデル）</h4>
+        <ul>
+          <li><strong>高精度予報:</strong> 気象庁の数値予報モデル（JMA Seamless）を直接連携。傘が必要な雨（40%以上）の日は「☂️ 傘が必要」バッジが自動点灯します。</li>
+          <li><strong>詳しく（今日1日の推移）:</strong> 天気右上の「詳しく ↗」ボタンから、今日1日（00:00〜21:00の固定8コマ）の天気・気温・降水確率・雨量を一目で確認できます（現在の時間帯を青枠で強調）。Yahoo!天気の雨雲レーダーへのリンクも備えています。</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>4. 時間連動のごみ出しリマインダー</h4>
+        <ul>
+          <li><strong>朝〜日中（〜15:59）:</strong> 「今日のごみ」を青色バッジで重点強調します。</li>
+          <li><strong>夕方〜夜（16:00〜）:</strong> 前夜出しや翌朝の準備動線に合わせ、自動的に「明日のごみ」が青色強調表示にシフトします。毎週および第N週の変則ルールに対応しています。</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>5. 下段スワイプ切替（3面構成）</h4>
+        <p>下段カードは左右スワイプまたは矢印ボタン（◀ / ▶）で切り替わります（状態は自動保存）。</p>
+        <ul>
+          <li><strong>電車案内:</strong> 最寄り駅の「次発（カウントダウン）」と「次々発（予定時刻と約○分後）」を表示。フッターの「表示」ボタンで「凡そモード（約○分後）」と「詳細モード（分:秒）」を切り替え可能です。</li>
+          <li><strong>当日限定ダイヤ切替:</strong> カレンダーにない祝日や振替日など、今日だけ土休日ダイヤにしたい場合はフッターの「ダイヤ切替」からワンタップで強制変更可能（深夜0時で自動解除）。</li>
+          <li><strong>週間カレンダー:</strong> 明日から7日間の天気予報・気温・ごみ出し予定を特大フォントで一覧表示。</li>
+          <li><strong>Todoチェッカー:</strong> 毎朝0時に未完了へ自動リセット。猫のご飯や薬など大切な記録を守るため、<strong>完了時の取り消しは「0.8秒以上の長押し」が必要な誤タップ保護仕様</strong>になっています。</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h4>6. 設定のバックアップ / 移行</h4>
+        <p>時刻表や地点、Todo項目などの設定はすべて端末内に保存されます。「設定」＞「データのバックアップ / 移行」からJSON形式で書き出し・読み込みができるため、PCで入力した時刻表をiPadへ簡単に移行できます。</p>
       </div>
 
       <div class="modal-footer">
@@ -1901,7 +1945,7 @@
       });
     }
 
-    // --- 5. Todoチェッカー管理ロジック ---
+    // --- 5. Todoチェッカー管理ロジック (完了時タップ記録 / 解除は長押しガード) ---
     const DEFAULT_TASKS = ["財布・定期", "鍵・社員証", "スマホ・充電器", "ハンカチ", "折りたたみ傘"];
 
     function getTaskNames() {
@@ -1938,20 +1982,24 @@
       }
     }
 
-    function toggleTaskComplete(index) {
+    function markTaskCompleted(index) {
       const progress = getTaskProgress();
-      const isDone = !progress.completed[index];
-      progress.completed[index] = isDone;
+      if (progress.completed[index]) return;
 
-      if (isDone) {
-        const now = new Date();
-        const h = String(now.getHours()).padStart(2, '0');
-        const m = String(now.getMinutes()).padStart(2, '0');
-        progress.times[index] = `${h}:${m}`;
-      } else {
-        progress.times[index] = "";
-      }
+      progress.completed[index] = true;
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      progress.times[index] = `${h}:${m}`;
 
+      localStorage.setItem('hub_task_progress', JSON.stringify(progress));
+      renderChecker();
+    }
+
+    function unmarkTask(index) {
+      const progress = getTaskProgress();
+      progress.completed[index] = false;
+      progress.times[index] = "";
       localStorage.setItem('hub_task_progress', JSON.stringify(progress));
       renderChecker();
     }
@@ -1966,17 +2014,65 @@
 
       for (let i = 0; i < 5; i++) {
         const isDone = !!progress.completed[i];
-        const timeStr = progress.times[i] ? `${progress.times[i]} 済` : "未完了";
         const taskName = names[i] || `タスク ${i + 1}`;
+        const timeStr = progress.times[i] ? `${progress.times[i]} 済` : "未完了";
 
         const item = document.createElement('div');
         item.className = 'checker-item' + (isDone ? ' done' : '');
-        item.onclick = () => toggleTaskComplete(i);
+
+        let pressTimer = null;
+        let isLongPressTriggered = false;
+
+        const startPress = () => {
+          if (!isDone) return;
+          isLongPressTriggered = false;
+          item.classList.add('pressing');
+          pressTimer = setTimeout(() => {
+            isLongPressTriggered = true;
+            item.classList.remove('pressing');
+            unmarkTask(i);
+          }, 800);
+        };
+
+        const cancelPress = () => {
+          if (pressTimer) {
+            clearTimeout(pressTimer);
+            pressTimer = null;
+          }
+          item.classList.remove('pressing');
+        };
+
+        item.addEventListener('touchstart', (e) => {
+          startPress();
+        }, { passive: true });
+
+        item.addEventListener('touchend', (e) => {
+          cancelPress();
+          if (!isDone) {
+            markTaskCompleted(i);
+          }
+        });
+
+        item.addEventListener('touchcancel', cancelPress);
+
+        item.addEventListener('mousedown', (e) => {
+          startPress();
+        });
+
+        item.addEventListener('mouseup', (e) => {
+          cancelPress();
+          if (!isDone && !isLongPressTriggered) {
+            markTaskCompleted(i);
+          }
+        });
+
+        item.addEventListener('mouseleave', cancelPress);
 
         item.innerHTML = `
           <div class="checker-icon">${isDone ? '✓' : ''}</div>
           <div class="checker-title">${taskName}</div>
           <div class="checker-time">${timeStr}</div>
+          ${isDone ? '<div class="checker-unlock-hint">長押しで解除</div>' : ''}
         `;
         container.appendChild(item);
       }
