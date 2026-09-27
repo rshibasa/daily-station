@@ -78,7 +78,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* 基本画面（通常時）: 長押しルーペ・テキスト選択を完全無効化 */
+    /* 基本画面: テキスト選択・長押しルーペ抑制 */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
       background-color: var(--bg-color);
@@ -91,8 +91,6 @@
       transition: background-color 0.25s ease, color 0.25s ease;
       overflow: hidden;
       position: relative;
-
-      /* iOS長押しメニュー抑制 & 選択禁止 */
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
@@ -334,7 +332,7 @@
       margin-left: 1px;
     }
 
-    /* 24時間天気タイムライン（今日0時〜21時の固定8コマ・均等グリッド） */
+    /* 24時間天気タイムライン（0時〜21時の固定8コマ・均等グリッド） */
     .hourly-timeline {
       display: grid;
       grid-template-columns: repeat(8, 1fr);
@@ -518,7 +516,7 @@
       margin-top: 3px;
     }
 
-    /* ペイン2: 週間カレンダービュー (明日からの7日間・文字拡大版) */
+    /* ペイン2: 週間カレンダービュー (各日タップ可能) */
     .week-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -539,6 +537,13 @@
       justify-items: center;
       text-align: center;
       row-gap: 2px;
+      cursor: pointer;
+      transition: transform 0.1s ease, border-color 0.2s ease;
+    }
+
+    .week-col:active {
+      transform: scale(0.97);
+      border-color: var(--accent-color);
     }
 
     .week-col-date {
@@ -617,7 +622,7 @@
       display: inline-block;
     }
 
-    /* ペイン3: Todoチェッカービュー (長押し解除対応) */
+    /* ペイン3: Todoチェッカービュー (長押し解除 & 星パーティクル対応) */
     .checker-container {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
@@ -639,6 +644,8 @@
       cursor: pointer;
       transition: background 0.2s, border-color 0.2s, transform 0.1s;
       text-align: center;
+      position: relative;
+      overflow: visible;
     }
 
     .checker-item:active {
@@ -668,6 +675,7 @@
       font-size: 1.1rem;
       color: var(--text-sub);
       transition: all 0.2s;
+      position: relative;
     }
 
     .checker-item.done .checker-icon {
@@ -709,6 +717,32 @@
       margin-top: 1px;
     }
 
+    /* 星パーティクル用CSSアニメーション */
+    .star-particle {
+      position: absolute;
+      pointer-events: none;
+      color: #fbbc04;
+      font-size: 1rem;
+      line-height: 1;
+      z-index: 100;
+      animation: popStar 0.65s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+    }
+
+    @keyframes popStar {
+      0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(0.3);
+      }
+      70% {
+        opacity: 0.9;
+        transform: translate(var(--tx), var(--ty)) scale(1.2);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--tx), var(--ty)) scale(0.6);
+      }
+    }
+
     /* トースト通知：画面左上に配置 */
     #wake-toast {
       display: none;
@@ -748,7 +782,7 @@
       font-weight: 600;
     }
 
-    /* --- モーダル共通スタイル（テキスト選択・ルーペを明示的に許可） --- */
+    /* --- モーダル共通スタイル --- */
     .modal {
       display: none;
       position: fixed;
@@ -769,8 +803,6 @@
       max-height: 90vh;
       overflow-y: auto;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-
-      /* モーダル内部はテキスト選択・長押しルーペを明示的に有効化 */
       -webkit-touch-callout: default;
       -webkit-user-select: text;
       user-select: text;
@@ -791,8 +823,6 @@
       width: 100%; padding: 8px; border: 1px solid var(--border-color);
       border-radius: 6px; background: var(--bg-color); color: var(--text-main);
       font-size: 0.85rem; font-family: inherit;
-
-      /* 入力要素内でのテキスト選択・カーソル移動を保証 */
       -webkit-touch-callout: default;
       -webkit-user-select: text;
       user-select: text;
@@ -953,7 +983,7 @@
         <span id="umbrella-badge" class="umbrella-alert">☂️ 傘が必要</span>
         <div style="display: flex; align-items: center; gap: 8px;">
           <span id="weather-updated">--:-- 更新</span>
-          <button onclick="openHourlyWeatherModal()" class="detail-btn">詳しく ↗</button>
+          <button onclick="openHourlyWeatherModalForToday()" class="detail-btn">詳しく ↗</button>
         </div>
       </div>
       <div class="weather-main-layout">
@@ -1020,12 +1050,12 @@
           </div>
         </div>
 
-        <!-- ペイン2: 週間カレンダー (明日からの7日間・文字拡大版) -->
+        <!-- ペイン2: 週間カレンダー (明日からの7日間・文字拡大 & 各日タップ対応) -->
         <div class="slider-pane">
           <div class="week-grid" id="week-grid-container"></div>
         </div>
 
-        <!-- ペイン3: Todoチェッカー (長押し解除対応) -->
+        <!-- ペイン3: Todoチェッカー (長押し解除 & 星パーティクル対応) -->
         <div class="slider-pane">
           <div class="checker-container" id="checker-grid-container"></div>
         </div>
@@ -1224,16 +1254,16 @@
     </div>
   </div>
 
-  <!-- 2. 今日1日の天気推移モーダル（00:00〜21:00固定8コマ・直近ハイライト） -->
+  <!-- 2. 日別24時間天気推移モーダル（今日および明日以降の日付を共有表示） -->
   <div id="hourly-weather-modal" class="modal">
     <div class="modal-box" style="max-width: 680px;">
       <div class="modal-header">
-        <h3>今日1日の天気推移（3時間ごと・JMA気象庁モデル）</h3>
+        <h3 id="hourly-modal-title">今日1日の天気推移（3時間ごと・JMA気象庁モデル）</h3>
         <span id="modal-location-sub" style="font-size: 0.8rem; color: var(--text-sub);">地点名</span>
       </div>
 
       <div id="hourly-timeline-container" class="hourly-timeline">
-        <!-- JSで00:00〜21:00の8コマを固定挿入 -->
+        <!-- JSで指定日の00:00〜21:00の8コマを固定挿入 -->
       </div>
 
       <div class="modal-footer" style="justify-content: space-between; align-items: center;">
@@ -1273,10 +1303,11 @@
       </div>
 
       <div class="help-section">
-        <h4>3. 天気予報 & 今日1日の推移（気象庁JMAモデル）</h4>
+        <h4>3. 天気予報 & 24時間推移（気象庁JMAモデル）</h4>
         <ul>
           <li><strong>高精度予報:</strong> 気象庁の数値予報モデル（JMA Seamless）を直接連携。傘が必要な雨（40%以上）の日は「☂️ 傘が必要」バッジが自動点灯します。</li>
-          <li><strong>詳しく（今日1日の推移）:</strong> 天気右上の「詳しく ↗」ボタンから、今日1日（00:00〜21:00の固定8コマ）の天気・気温・降水確率・雨量を一目で確認できます（現在の時間帯を青枠で強調）。Yahoo!天気の雨雲レーダーへのリンクも備えています。</li>
+          <li><strong>詳しく（今日1日の推移）:</strong> 天気右上の「詳しく ↗」ボタンから、今日1日（00:00〜21:00の固定8コマ）の推移を一覧確認できます（現在の時間帯を青枠で強調）。</li>
+          <li><strong>週間天気の詳細確認:</strong> 下段の週間カレンダーの各日カードをタップすると、その日の24時間推移（3時間ごと）を同じモーダルで詳細確認できます。</li>
         </ul>
       </div>
 
@@ -1294,8 +1325,8 @@
         <ul>
           <li><strong>電車案内:</strong> 最寄り駅の「次発（カウントダウン）」と「次々発（予定時刻と約○分後）」を表示。フッターの「表示」ボタンで「凡そモード（約○分後）」と「詳細モード（分:秒）」を切り替え可能です。</li>
           <li><strong>当日限定ダイヤ切替:</strong> カレンダーにない祝日や振替日など、今日だけ土休日ダイヤにしたい場合はフッターの「ダイヤ切替」からワンタップで強制変更可能（深夜0時で自動解除）。</li>
-          <li><strong>週間カレンダー:</strong> 明日から7日間の天気予報・気温・ごみ出し予定を特大フォントで一覧表示。</li>
-          <li><strong>Todoチェッカー:</strong> 毎朝0時に未完了へ自動リセット。猫のご飯や薬など大切な記録を守るため、<strong>完了時の取り消しは「0.8秒以上の長押し」が必要な誤タップ保護仕様</strong>になっています。</li>
+          <li><strong>週間カレンダー:</strong> 明日から7日間の天気予報・気温・ごみ出し予定を特大フォントで一覧表示（タップで各日の詳細推移を表示）。</li>
+          <li><strong>Todoチェッカー:</strong> 毎朝0時に未完了へ自動リセット。チェックを入れると星がパッと散る達成感演出が作動します。誤タップ防止のため<strong>完了時の取り消しは「0.8秒以上の長押し」が必要な保護仕様</strong>になっています。</li>
         </ul>
       </div>
 
@@ -1449,7 +1480,7 @@
     let activeTimerInterval = null;
 
     function handleScreenTap(event) {
-      if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls') || event.target.closest('.checker-item')) return;
+      if (event.target.closest('.modal') || event.target.closest('.footer-actions') || event.target.closest('.carousel-header-controls') || event.target.closest('.checker-item') || event.target.closest('.week-col')) return;
       
       const currentMode = getCurrentTimeMode();
       const cfg = getTimeSettings();
@@ -1884,8 +1915,13 @@
       }
     }
 
-    // --- 24時間天気モーダル描画ロジック（今日0時〜21時固定8コマ・現在帯ハイライト） ---
-    function openHourlyWeatherModal() {
+    // --- 24時間天気推移モーダル汎用描画ロジック（今日および明日以降の日付に対応） ---
+    function openHourlyWeatherModalForToday() {
+      const now = new Date();
+      openHourlyWeatherModalForDate(now, true);
+    }
+
+    function openHourlyWeatherModalForDate(targetDate, isToday = false) {
       const loc = getLocationSettings();
       document.getElementById('modal-location-sub').textContent = document.getElementById('location-name').textContent;
       
@@ -1897,7 +1933,19 @@
         yahooLink.href = 'https://weather.yahoo.co.jp/weather/';
       }
 
-      renderHourlyTimeline();
+      const m = targetDate.getMonth() + 1;
+      const d = targetDate.getDate();
+      const days = ['日', '月', '火', '水', '木', '金', '土'];
+      const dayStr = days[targetDate.getDay()];
+      
+      const titleEl = document.getElementById('hourly-modal-title');
+      if (isToday) {
+        titleEl.textContent = `今日1日の天気推移（3時間ごと・JMA気象庁モデル）`;
+      } else {
+        titleEl.textContent = `${m}月${d}日（${dayStr}）の天気推移（3時間ごと・JMAモデル）`;
+      }
+
+      renderHourlyTimelineForDate(targetDate, isToday);
       document.getElementById('hourly-weather-modal').style.display = 'flex';
     }
 
@@ -1905,7 +1953,7 @@
       document.getElementById('hourly-weather-modal').style.display = 'none';
     }
 
-    function renderHourlyTimeline() {
+    function renderHourlyTimelineForDate(targetDate, isToday) {
       const container = document.getElementById('hourly-timeline-container');
       container.innerHTML = '';
 
@@ -1914,26 +1962,30 @@
         return;
       }
 
+      const y = targetDate.getFullYear();
+      const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+      const d = String(targetDate.getDate()).padStart(2, '0');
+      const targetDateStr = `${y}-${m}-${d}`;
+
       const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      const todayDateStr = `${y}-${m}-${d}`;
       const currentHour = now.getHours();
 
       const targetHours = [0, 3, 6, 9, 12, 15, 18, 21];
 
-      let currentTargetHour = 21;
-      for (let i = 0; i < targetHours.length; i++) {
-        if (currentHour < targetHours[i] + 3) {
-          currentTargetHour = targetHours[i];
-          break;
+      let currentTargetHour = -1;
+      if (isToday) {
+        currentTargetHour = 21;
+        for (let i = 0; i < targetHours.length; i++) {
+          if (currentHour < targetHours[i] + 3) {
+            currentTargetHour = targetHours[i];
+            break;
+          }
         }
       }
 
       targetHours.forEach(hVal => {
         const hourStr = String(hVal).padStart(2, '0');
-        const targetIsoPrefix = `${todayDateStr}T${hourStr}:00`;
+        const targetIsoPrefix = `${targetDateStr}T${hourStr}:00`;
 
         const idx = globalHourlyWeatherData.time.findIndex(t => t.startsWith(targetIsoPrefix));
 
@@ -1950,7 +2002,7 @@
         }
 
         const info = resolveWeatherDisplay(wCode);
-        const isCurrent = (hVal === currentTargetHour);
+        const isCurrent = (isToday && hVal === currentTargetHour);
 
         const col = document.createElement('div');
         col.className = 'hourly-col' + (isCurrent ? ' is-current' : '');
@@ -1965,7 +2017,7 @@
       });
     }
 
-    // --- 5. Todoチェッカー管理ロジック (完了時タップ記録 / 解除は長押しガード) ---
+    // --- 5. Todoチェッカー管理ロジック (完了時星パーティクル & 長押しガード) ---
     const DEFAULT_TASKS = ["財布・定期", "鍵・社員証", "スマホ・充電器", "ハンカチ", "折りたたみ傘"];
 
     function getTaskNames() {
@@ -2002,7 +2054,35 @@
       }
     }
 
-    function markTaskCompleted(index) {
+    // 星パーティクル発生関数
+    function triggerStarBurst(targetElement) {
+      const starSymbols = ['✦', '★', '✧', '⋆'];
+      const starCount = 7;
+
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('span');
+        star.className = 'star-particle';
+        star.textContent = starSymbols[i % starSymbols.length];
+
+        // 360度にランダムな角度と距離で飛び散る
+        const angle = (Math.PI * 2 * i) / starCount + (Math.random() * 0.4 - 0.2);
+        const distance = 30 + Math.random() * 20;
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance;
+
+        star.style.setProperty('--tx', `${tx}px`);
+        star.style.setProperty('--ty', `${ty}px`);
+
+        targetElement.appendChild(star);
+
+        // アニメーション完了後にDOMから完全削除
+        star.addEventListener('animationend', () => {
+          star.remove();
+        });
+      }
+    }
+
+    function markTaskCompleted(index, targetElement) {
       const progress = getTaskProgress();
       if (progress.completed[index]) return;
 
@@ -2013,7 +2093,13 @@
       progress.times[index] = `${h}:${m}`;
 
       localStorage.setItem('hub_task_progress', JSON.stringify(progress));
-      renderChecker();
+      
+      // 星の演出を発火してから再レンダリング
+      if (targetElement) {
+        const iconWrap = targetElement.querySelector('.checker-icon') || targetElement;
+        triggerStarBurst(iconWrap);
+      }
+      setTimeout(renderChecker, 180);
     }
 
     function unmarkTask(index) {
@@ -2069,7 +2155,7 @@
         item.addEventListener('touchend', (e) => {
           cancelPress();
           if (!isDone) {
-            markTaskCompleted(i);
+            markTaskCompleted(i, item);
           }
         });
 
@@ -2082,7 +2168,7 @@
         item.addEventListener('mouseup', (e) => {
           cancelPress();
           if (!isDone && !isLongPressTriggered) {
-            markTaskCompleted(i);
+            markTaskCompleted(i, item);
           }
         });
 
@@ -2115,7 +2201,7 @@
         const config = loadTrainConfig();
         titleEl.textContent = `${config.station} - ${config.direction}`;
       } else if (currentBottomView === 1) {
-        titleEl.textContent = "週間カレンダー & 天気予報 (明日から7日間)";
+        titleEl.textContent = "週間カレンダー & 天気予報 (タップで24h詳細)";
       } else {
         titleEl.textContent = "Todoチェッカー (毎日0時リセット)";
       }
@@ -2153,7 +2239,7 @@
       }
     }, { passive: true });
 
-    // --- 7. 週間カレンダー描画ロジック (明日からの7日間・文字拡大版) ---
+    // --- 7. 週間カレンダー描画ロジック (明日からの7日間・各日タップ対応) ---
     function renderWeekCalendar() {
       const container = document.getElementById('week-grid-container');
       container.innerHTML = '';
@@ -2167,6 +2253,14 @@
 
         const col = document.createElement('div');
         col.className = 'week-col';
+        col.title = `${d.getMonth() + 1}/${d.getDate()} の24時間天気を表示`;
+        
+        // タップ時にその日付の推移モーダルを開く
+        const targetDateInstance = new Date(d);
+        col.onclick = (e) => {
+          e.stopPropagation();
+          openHourlyWeatherModalForDate(targetDateInstance, false);
+        };
 
         const dayIdx = d.getDay();
         const holiday = getJapaneseHolidayName(d);
