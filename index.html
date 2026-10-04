@@ -516,7 +516,7 @@
       margin-top: 3px;
     }
 
-    /* ペイン2: 週間カレンダービュー (各日タップ可能) */
+    /* ペイン2: 週間カレンダービュー (各日タップ対応) */
     .week-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -622,10 +622,9 @@
       display: inline-block;
     }
 
-    /* ペイン3: Todoチェッカービュー (長押し解除 & 星パーティクル対応) */
+    /* ペイン3: Todoチェッカービュー (3〜6枠可変グリッド) */
     .checker-container {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
       grid-gap: 10px;
       flex: 1;
       align-items: stretch;
@@ -636,7 +635,7 @@
       background: var(--bg-color);
       border: 2px solid var(--border-color);
       border-radius: 14px;
-      padding: 10px 8px;
+      padding: 8px 6px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -685,12 +684,17 @@
     }
 
     .checker-title {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: var(--text-main);
       word-break: break-all;
       margin: 4px 0;
       line-height: 1.2;
+    }
+
+    /* 6枠設定時のフォント微調整 */
+    .checker-container[data-slots="6"] .checker-title {
+      font-size: 0.88rem;
     }
 
     .checker-item.done .checker-title {
@@ -1050,12 +1054,12 @@
           </div>
         </div>
 
-        <!-- ペイン2: 週間カレンダー (明日からの7日間・文字拡大 & 各日タップ対応) -->
+        <!-- ペイン2: 週間カレンダー (明日からの7日間・各日タップ対応) -->
         <div class="slider-pane">
           <div class="week-grid" id="week-grid-container"></div>
         </div>
 
-        <!-- ペイン3: Todoチェッカー (長押し解除 & 星パーティクル対応) -->
+        <!-- ペイン3: Todoチェッカー (3〜6枠可変対応) -->
         <div class="slider-pane">
           <div class="checker-container" id="checker-grid-container"></div>
         </div>
@@ -1167,15 +1171,22 @@
         </select>
       </div>
 
-      <!-- Todoチェッカー設定項目 (5項目) -->
+      <!-- Todoチェッカー設定項目 (3〜6枠動的選択) -->
       <div class="form-item">
-        <label>📝 デイリーTodoチェッカー (5つのタスク)</label>
-        <div class="checker-edit-grid">
-          <input type="text" id="input-task-0" placeholder="タスク1 (例: 財布・定期)">
-          <input type="text" id="input-task-1" placeholder="タスク2 (例: 鍵・社員証)">
-          <input type="text" id="input-task-2" placeholder="タスク3 (例: スマホ・充電器)">
-          <input type="text" id="input-task-3" placeholder="タスク4 (例: ハンカチ・ティッシュ)">
-          <input type="text" id="input-task-4" placeholder="タスク5 (例: 折りたたみ傘)">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="margin-bottom:0;">📝 デイリーTodoチェッカー</label>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:0.75rem; color:var(--text-sub);">枠数:</span>
+            <select id="select-task-count" onchange="onTaskCountChange()" style="width:auto; padding:2px 8px; font-size:0.8rem;">
+              <option value="3">3個</option>
+              <option value="4">4個</option>
+              <option value="5">5個</option>
+              <option value="6">6個</option>
+            </select>
+          </div>
+        </div>
+        <div class="checker-edit-grid" id="checker-edit-inputs">
+          <!-- JSで動的生成 -->
         </div>
       </div>
 
@@ -1254,7 +1265,7 @@
     </div>
   </div>
 
-  <!-- 2. 日別24時間天気推移モーダル（今日および明日以降の日付を共有表示） -->
+  <!-- 2. 日別24時間天気推移モーダル -->
   <div id="hourly-weather-modal" class="modal">
     <div class="modal-box" style="max-width: 680px;">
       <div class="modal-header">
@@ -1275,7 +1286,7 @@
     </div>
   </div>
 
-  <!-- 3. 使い方・ヘルプモーダル（全機能網羅・最新版） -->
+  <!-- 3. 使い方・ヘルプモーダル -->
   <div id="help-modal" class="modal">
     <div class="modal-box" style="max-width: 600px;">
       <div class="modal-header">
@@ -1326,7 +1337,7 @@
           <li><strong>電車案内:</strong> 最寄り駅の「次発（カウントダウン）」と「次々発（予定時刻と約○分後）」を表示。フッターの「表示」ボタンで「凡そモード（約○分後）」と「詳細モード（分:秒）」を切り替え可能です。</li>
           <li><strong>当日限定ダイヤ切替:</strong> カレンダーにない祝日や振替日など、今日だけ土休日ダイヤにしたい場合はフッターの「ダイヤ切替」からワンタップで強制変更可能（深夜0時で自動解除）。</li>
           <li><strong>週間カレンダー:</strong> 明日から7日間の天気予報・気温・ごみ出し予定を特大フォントで一覧表示（タップで各日の詳細推移を表示）。</li>
-          <li><strong>Todoチェッカー:</strong> 毎朝0時に未完了へ自動リセット。チェックを入れると星がパッと散る達成感演出が作動します。誤タップ防止のため<strong>完了時の取り消しは「0.8秒以上の長押し」が必要な保護仕様</strong>になっています。</li>
+          <li><strong>Todoチェッカー:</strong> 3〜6枠で枠数を設定可能。チェックを入れると星が散る達成感演出が作動し、完了時の取り消しは「0.8秒以上の長押し」が必要な保護仕様です。毎朝0時に自動リセットされます。</li>
         </ul>
       </div>
 
@@ -1915,7 +1926,7 @@
       }
     }
 
-    // --- 24時間天気推移モーダル汎用描画ロジック（今日および明日以降の日付に対応） ---
+    // --- 24時間天気推移モーダル汎用描画ロジック ---
     function openHourlyWeatherModalForToday() {
       const now = new Date();
       openHourlyWeatherModalForDate(now, true);
@@ -2017,26 +2028,47 @@
       });
     }
 
-    // --- 5. Todoチェッカー管理ロジック (完了時星パーティクル & 長押しガード) ---
-    const DEFAULT_TASKS = ["財布・定期", "鍵・社員証", "スマホ・充電器", "ハンカチ", "折りたたみ傘"];
+    // --- 5. Todoチェッカー管理ロジック (3〜6枠可変対応) ---
+    const DEFAULT_TASK_NAMES = ["財布・定期", "鍵・社員証", "スマホ・充電器", "ハンカチ", "折りたたみ傘", "猫のご飯"];
+
+    function getTaskCount() {
+      const saved = localStorage.getItem('hub_task_count');
+      const count = parseInt(saved || "5", 10);
+      return Math.min(6, Math.max(3, count));
+    }
 
     function getTaskNames() {
+      const count = getTaskCount();
       const saved = localStorage.getItem('hub_task_names');
+      let list = [];
       if (saved) {
-        try { return JSON.parse(saved); } catch(e) {}
+        try { list = JSON.parse(saved); } catch(e) {}
       }
-      return DEFAULT_TASKS;
+      const result = [];
+      for (let i = 0; i < count; i++) {
+        result.push(list[i] || DEFAULT_TASK_NAMES[i] || `タスク ${i + 1}`);
+      }
+      return result;
     }
 
     function getTaskProgress() {
+      const count = getTaskCount();
       const saved = localStorage.getItem('hub_task_progress');
+      let data = { date: "", completed: [], times: [] };
       if (saved) {
-        try { return JSON.parse(saved); } catch(e) {}
+        try { data = JSON.parse(saved); } catch(e) {}
       }
-      return { date: "", completed: [false, false, false, false, false], times: ["", "", "", "", ""] };
+      const completed = [];
+      const times = [];
+      for (let i = 0; i < count; i++) {
+        completed.push(data.completed && data.completed[i] !== undefined ? !!data.completed[i] : false);
+        times.push(data.times && data.times[i] !== undefined ? data.times[i] : "");
+      }
+      return { date: data.date || "", completed, times };
     }
 
     function checkAndResetDailyTasks(nowDate) {
+      const count = getTaskCount();
       const y = nowDate.getFullYear();
       const m = String(nowDate.getMonth() + 1).padStart(2, '0');
       const d = String(nowDate.getDate()).padStart(2, '0');
@@ -2046,8 +2078,8 @@
       if (progress.date !== todayStr) {
         const fresh = {
           date: todayStr,
-          completed: [false, false, false, false, false],
-          times: ["", "", "", "", ""]
+          completed: new Array(count).fill(false),
+          times: new Array(count).fill("")
         };
         localStorage.setItem('hub_task_progress', JSON.stringify(fresh));
         renderChecker();
@@ -2064,7 +2096,6 @@
         star.className = 'star-particle';
         star.textContent = starSymbols[i % starSymbols.length];
 
-        // 360度にランダムな角度と距離で飛び散る
         const angle = (Math.PI * 2 * i) / starCount + (Math.random() * 0.4 - 0.2);
         const distance = 30 + Math.random() * 20;
         const tx = Math.cos(angle) * distance;
@@ -2075,7 +2106,6 @@
 
         targetElement.appendChild(star);
 
-        // アニメーション完了後にDOMから完全削除
         star.addEventListener('animationend', () => {
           star.remove();
         });
@@ -2094,7 +2124,6 @@
 
       localStorage.setItem('hub_task_progress', JSON.stringify(progress));
       
-      // 星の演出を発火してから再レンダリング
       if (targetElement) {
         const iconWrap = targetElement.querySelector('.checker-icon') || targetElement;
         triggerStarBurst(iconWrap);
@@ -2115,10 +2144,14 @@
       if (!container) return;
       container.innerHTML = '';
 
+      const count = getTaskCount();
+      container.setAttribute('data-slots', count);
+      container.style.gridTemplateColumns = `repeat(${count}, 1fr)`;
+
       const names = getTaskNames();
       const progress = getTaskProgress();
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < count; i++) {
         const isDone = !!progress.completed[i];
         const taskName = names[i] || `タスク ${i + 1}`;
         const timeStr = progress.times[i] ? `${progress.times[i]} 済` : "未完了";
@@ -2239,7 +2272,7 @@
       }
     }, { passive: true });
 
-    // --- 7. 週間カレンダー描画ロジック (明日からの7日間・各日タップ対応) ---
+    // --- 7. 週間カレンダー描画ロジック ---
     function renderWeekCalendar() {
       const container = document.getElementById('week-grid-container');
       container.innerHTML = '';
@@ -2255,7 +2288,6 @@
         col.className = 'week-col';
         col.title = `${d.getMonth() + 1}/${d.getDate()} の24時間天気を表示`;
         
-        // タップ時にその日付の推移モーダルを開く
         const targetDateInstance = new Date(d);
         col.onclick = (e) => {
           e.stopPropagation();
@@ -2488,6 +2520,28 @@
       document.getElementById('manual-location-container').style.display = (mode === 'manual') ? 'block' : 'none';
     }
 
+    function renderTaskEditInputs(count, existingNames) {
+      const container = document.getElementById('checker-edit-inputs');
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const val = existingNames[i] !== undefined ? existingNames[i] : (DEFAULT_TASK_NAMES[i] || `タスク ${i + 1}`);
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = `input-task-${i}`;
+        input.value = val;
+        input.placeholder = `タスク${i + 1} (例: ${DEFAULT_TASK_NAMES[i] || 'タスク名'})`;
+        container.appendChild(input);
+      }
+    }
+
+    function onTaskCountChange() {
+      const newCount = parseInt(document.getElementById('select-task-count').value, 10);
+      const currentNames = [];
+      const prevInputs = document.querySelectorAll('#checker-edit-inputs input');
+      prevInputs.forEach(inp => currentNames.push(inp.value.trim()));
+      renderTaskEditInputs(newCount, currentNames);
+    }
+
     function openTrainModal() {
       initLocationSelectors();
       const loc = getLocationSettings();
@@ -2526,10 +2580,9 @@
       const now = new Date();
       document.getElementById('select-schedule-override').value = getScheduleOverrideMode(now);
 
-      const taskNames = getTaskNames();
-      for (let i = 0; i < 5; i++) {
-        document.getElementById(`input-task-${i}`).value = taskNames[i] || '';
-      }
+      const taskCount = getTaskCount();
+      document.getElementById('select-task-count').value = String(taskCount);
+      renderTaskEditInputs(taskCount, getTaskNames());
 
       document.getElementById('select-train-display-mode').value = getTrainDisplayMode();
 
@@ -2601,10 +2654,14 @@
       const overrideVal = document.getElementById('select-schedule-override').value;
       setScheduleOverrideMode(overrideVal, now);
 
+      const targetCount = parseInt(document.getElementById('select-task-count').value, 10);
+      localStorage.setItem('hub_task_count', targetCount);
+
       const updatedTasks = [];
-      for (let i = 0; i < 5; i++) {
-        const val = document.getElementById(`input-task-${i}`).value.trim();
-        updatedTasks.push(val || `タスク ${i + 1}`);
+      for (let i = 0; i < targetCount; i++) {
+        const el = document.getElementById(`input-task-${i}`);
+        const val = el ? el.value.trim() : "";
+        updatedTasks.push(val || DEFAULT_TASK_NAMES[i] || `タスク ${i + 1}`);
       }
       localStorage.setItem('hub_task_names', JSON.stringify(updatedTasks));
 
@@ -2651,6 +2708,7 @@
         displayMode: getTrainDisplayMode(),
         trashRules: localStorage.getItem('hub_trash_rules') || DEFAULT_TRASH_RULES,
         timeSettings: getTimeSettings(),
+        taskCount: getTaskCount(),
         taskNames: getTaskNames(),
         taskProgress: getTaskProgress(),
         scheduleOverride: getScheduleOverrideMode(now),
@@ -2673,6 +2731,7 @@
         displayMode: getTrainDisplayMode(),
         trashRules: localStorage.getItem('hub_trash_rules') || DEFAULT_TRASH_RULES,
         timeSettings: getTimeSettings(),
+        taskCount: getTaskCount(),
         taskNames: getTaskNames(),
         taskProgress: getTaskProgress(),
         scheduleOverride: getScheduleOverrideMode(now),
@@ -2702,6 +2761,8 @@
         if (parsed.displayMode) localStorage.setItem('train_display_mode', parsed.displayMode);
         if (parsed.trashRules) localStorage.setItem('hub_trash_rules', parsed.trashRules);
         if (parsed.timeSettings) localStorage.setItem('hub_time_settings', JSON.stringify(parsed.timeSettings));
+        
+        if (parsed.taskCount) localStorage.setItem('hub_task_count', parsed.taskCount);
         if (parsed.taskNames) localStorage.setItem('hub_task_names', JSON.stringify(parsed.taskNames));
         if (parsed.taskProgress) localStorage.setItem('hub_task_progress', JSON.stringify(parsed.taskProgress));
         
